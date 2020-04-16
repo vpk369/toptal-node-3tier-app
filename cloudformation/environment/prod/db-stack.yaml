@@ -1,0 +1,454 @@
+# Stack name ---  Toptal-PROD-DB
+#check if we need MultiAZ for prod -- ensure below values are set
+Description: This template creates MySQL DB.
+Parameters:
+  AllocatedStorage:
+    Description: The amount of storage (in gigabytes) to be initially allocated for the database instance.
+    Type: String
+    Default: 10
+
+  SecurityGroupStackName:
+    Description: Name of the Security Groups stack. This is used in exporting SG values from that stack.
+    Type: String
+    Default: "Toptal-PROD-SecurityGroup"
+
+  CreatedByTag:
+    Description: Email ID of the team that creates this stack
+    Type: String
+    Default: vpk369@gmail.com
+
+  ProductName:
+    Description: A Product name that will be prefixed to resource names
+    Type: String
+    AllowedValues: 
+      - Toptal
+    Default: 'Toptal'
+
+  EnvironmentName:
+    Description: Environment name for tagging
+    Type: String
+    AllowedValues: 
+      - DEV
+      - QA
+      - STAGE
+      - PRE-PROD
+      - PROD
+    Default: 'PROD'
+
+  DbClusterName:
+    Description: Name of the database cluster.
+    Type: String
+    Default: Toptal-PROD-DBcluster
+
+  DbInstanceName:
+    Description: Name of the database instance.
+    Type: String
+    Default: Toptal-PROD-DBinstance
+
+  SubnetIds:
+    Description: SubnetIds for Subnet Group
+    Type: List<AWS::EC2::Subnet::Id>
+    Default: "subnet-0e73df693f857e7b8,subnet-0518c906f2b731475"
+
+  DBInstanceClass:
+    Description: DB Instance Class for the db. Select sizing based on the environment; PROD being db.r5.2xlarge and DEV being db.t3.small
+    Type: String
+    AllowedValues:
+      - db.t2.micro
+      - db.m4.large
+      - db.r5.2xlarge
+    Default: "db.t2.micro"
+
+  Engine:
+    Description: Engine for the db
+    Type: String
+    Default: "mysql"
+
+  EngineVersion:
+    Description: Engine Version for the db
+    Type: String
+    Default: "5.7.26"
+
+  RDSServiceRole:
+    Description: ARN of the RDS service role so as to publish logs to cloud watch
+    Type: String
+    Default: "arn:aws:iam::250144837585:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"
+
+  DatabaseName:
+    Description: DB Name for RDS MySQLDB.
+    Type: String
+    Default: "ToptalProdDB"
+
+  SharedInfraStackName:
+    Description: Name of the SharedInfra stack. This is used in exporting SNS topic ARN.
+    Type: String
+    Default: "Toptal-PROD-SharedInfra"
+  
+  StorageType:
+    Description: Storage type for MySQL
+    Type: String
+    AllowedValues:
+      - standard
+      - gp2
+      - io1 #this shoud have been default
+    Default: standard
+
+  # IOPS:
+  #   Description: Minimum IOPS value for io1 type is 1000
+  #   Type: String
+  #   Default: 1000
+
+  DBSecretsName:
+    Description: Name of the Secret in which DB creds are stored.
+    Type: String
+    Default: "PROD/Toptal/DB"
+
+
+Metadata: 
+  # AWS::CloudFormation::Interface: 
+  #   ParameterGroups: 
+  #     - 
+  #       Label: 
+  #         default: "Network Configuration"
+  #       Parameters: 
+  #         - SubnetIds
+  #     -
+  #       Label:
+  #         default: "Database Configuration"
+  #       Parameters:
+  #         - DatabaseName
+  #         - DBInstanceClass
+  #         - StorageType
+  #         - IOPS
+  #         - AllocatedStorage
+  #         - DbClusterName
+  #         - DbInstanceName
+  #         - Engine
+  #         - EngineVersion
+  #         - MasterUsername
+  #         - MasterUserPassword
+  #         - RDSServiceRole
+  #     - 
+  #       Label:
+  #         default: "General Configuration"
+  #       Parameters:
+  #         - EnvironmentName
+  #         - ProductName
+  #         - SecretsName
+  #     - 
+  #       Label: 
+  #         default: "CloudFormation Stack References"
+  #       Parameters:
+  #         - SecurityGroupStackName
+  #         - SharedInfraStackName
+
+Resources:
+  # This is a Secret resource with a randomly generated password in its SecretString JSON.
+  # This should have been manually done for security reasons as the username is exposed
+  ToptalDBSecrets:
+    Type: 'AWS::SecretsManager::Secret'
+    Properties:
+      Name: !Ref DBSecretsName
+      Description: "This secret has a dynamically generated secret password."
+      GenerateSecretString:
+        SecretStringTemplate: '{"DB_USER": "Admin"}'
+        GenerateStringKey: "DB_PASSWORD"
+        PasswordLength: 15
+        ExcludeCharacters: '"@/\'
+      Tags:
+        -
+          Key: CreatedBy
+          Value: vpk369@gmail.com
+
+  DBSubnetGroup:
+    Type: "AWS::RDS::DBSubnetGroup"
+    Properties:
+      DBSubnetGroupDescription: "subnet group for RDS"
+      SubnetIds: !Ref SubnetIds
+      Tags:
+        -
+          Key: "Name"
+          Value: !Sub ${ProductName}-${EnvironmentName}-DBSubnetGroup
+
+  DB:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      AllocatedStorage: !Ref AllocatedStorage
+      DBInstanceIdentifier: !Ref DbInstanceName
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      EnableCloudwatchLogsExports:
+        - audit
+        - general
+        - slowquery
+        - error
+      Engine: !Ref Engine
+      EngineVersion: !Ref EngineVersion
+      MasterUsername: !Sub '{{resolve:secretsmanager:${DBSecretsName}:SecretString:DB_USER}}'
+      MasterUserPassword: !Sub '{{resolve:secretsmanager:${DBSecretsName}:SecretString:DB_PASSWORD}}'
+      PubliclyAccessible: 'false'
+      LicenseModel: "general-public-license"
+      DBInstanceClass: !Ref DBInstanceClass
+      StorageType: !Ref StorageType
+      MultiAZ: "False"
+      # Iops: !Ref IOPS
+      DBName: !Ref DatabaseName
+      VPCSecurityGroups:
+      - Fn::ImportValue:
+          !Sub "${SecurityGroupStackName}:RdsSgId"
+      Tags:
+          -
+            Key: Business / Service Owner
+            Value: CSE
+          -
+            Key: Purpose
+            Value: Database
+          -
+            Key: ProductID
+            Value: !Ref ProductName
+          -
+            Key: Environment
+            Value: !Sub ${EnvironmentName}
+          -
+            Key: Name
+            Value: !Sub ${ProductName}-${EnvironmentName}
+          - 
+            Key: CreatedBy
+            Value: !Sub ${CreatedByTag}
+
+  DBPagerDutySNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: PagerDuty Integration for DB
+      Subscription:
+      - Endpoint: !Sub ${CreatedByTag}
+        Protocol: "email"
+
+  DBHighCPUUtilizationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      # When state goes from ok to alarm, creates an incident in PagerDuty
+      AlarmActions:
+      - !Ref DBPagerDutySNSTopic
+      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      OKActions:
+      - !Ref DBPagerDutySNSTopic
+      AlarmDescription: CPU utilization above 70% for the past 5 minutes for uCMS DB
+      AlarmName: !Sub ${ProductName}-${EnvironmentName}-Database-HighCPUUtilizationAlarm
+      MetricName: CPUUtilization
+      Namespace: AWS/RDS
+      Statistic: Average
+      EvaluationPeriods: 5
+      Period: 60
+      Threshold: 70
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+      - Name: DBInstanceIdentifier
+        Value: !Ref DbInstanceName
+
+  DBHighMemoryUtilizationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      # When state goes from ok to alarm, creates an incident in PagerDuty
+      AlarmActions:
+      - !Ref DBPagerDutySNSTopic
+      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      OKActions:
+      - !Ref DBPagerDutySNSTopic
+      AlarmDescription: Freeable memory under 700MB for the past 5 minutes
+      AlarmName: !Sub ${ProductName}-${EnvironmentName}-Database-HighMemoryUtilizationAlarm
+      MetricName: FreeableMemory
+      Namespace: AWS/RDS
+      Statistic: Average
+      EvaluationPeriods: 5
+      Period: 60
+      Threshold: 700000000
+      ComparisonOperator: LessThanOrEqualToThreshold
+      Dimensions:
+      - Name: DBInstanceIdentifier
+        Value: !Ref DbInstanceName
+
+  DBLowStorageAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      # When state goes from ok to alarm, creates an incident in PagerDuty
+      AlarmActions:
+      - !Ref DBPagerDutySNSTopic
+      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      OKActions:
+      - !Ref DBPagerDutySNSTopic
+      AlarmDescription: Storage under 10GB
+      AlarmName: !Sub ${ProductName}-${EnvironmentName}-Database-LowStorageAlarm
+      MetricName: FreeStorageSpace
+      Namespace: AWS/RDS
+      Statistic: Average
+      EvaluationPeriods: 3
+      Period: 900
+      Threshold: 10000000000
+      ComparisonOperator: LessThanOrEqualToThreshold
+      Dimensions:
+      - Name: DBInstanceIdentifier
+        Value: !Ref DbInstanceName
+
+  DBReadIOPSAboveBasePerformance:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      # When state goes from ok to alarm, creates an incident in PagerDuty
+      AlarmActions:
+      - !Ref DBPagerDutySNSTopic
+      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      OKActions:
+      - !Ref DBPagerDutySNSTopic
+      AlarmDescription: Read IOPS above 1000
+      AlarmName: !Sub ${ProductName}-${EnvironmentName}-DBHighReadIOPS
+      MetricName: ReadIOPS
+      Namespace: AWS/RDS
+      Statistic: Average
+      EvaluationPeriods: 5
+      Period: 60
+      Threshold: 1000
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+      - Name: DBInstanceIdentifier
+        Value: !Ref DbInstanceName
+
+  DBWriteIOPSAboveBasePerformance:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      # When state goes from ok to alarm, creates an incident in PagerDuty
+      AlarmActions:
+      - !Ref DBPagerDutySNSTopic
+      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      OKActions:
+      - !Ref DBPagerDutySNSTopic
+      AlarmDescription: Write IOPS above 1000
+      AlarmName: !Sub ${ProductName}-${EnvironmentName}-DBHighWriteIOPS
+      MetricName: WriteIOPS
+      Namespace: AWS/RDS
+      Statistic: Average
+      EvaluationPeriods: 5
+      Period: 60
+      Threshold: 1000
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+      - Name: DBInstanceIdentifier
+        Value: !Ref DbInstanceName
+
+  DBHighReadLatency:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      # When state goes from ok to alarm, creates an incident in PagerDuty
+      AlarmActions:
+      - !Ref DBPagerDutySNSTopic
+      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      OKActions:
+      - !Ref DBPagerDutySNSTopic
+      AlarmDescription: Read Latency above 4ms
+      AlarmName: !Sub ${ProductName}-${EnvironmentName}-DBHighReadLatency
+      MetricName: ReadLatency
+      Namespace: AWS/RDS
+      Statistic: Average
+      EvaluationPeriods: 5
+      Period: 60
+      Threshold: 0.04
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+      - Name: DBInstanceIdentifier
+        Value: !Ref DbInstanceName
+
+  DBHighWriteLatency:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      # When state goes from ok to alarm, creates an incident in PagerDuty
+      AlarmActions:
+      - !Ref DBPagerDutySNSTopic
+      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      OKActions:
+      - !Ref DBPagerDutySNSTopic
+      AlarmDescription: Write Latency above 4ms
+      AlarmName: !Sub ${ProductName}-${EnvironmentName}-DBHighWriteLatency
+      MetricName: WriteLatency
+      Namespace: AWS/RDS
+      Statistic: Average
+      EvaluationPeriods: 5
+      Period: 60
+      Threshold: 0.04
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+      - Name: DBInstanceIdentifier
+        Value: !Ref DbInstanceName
+
+  DBHighReadThroughput:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      # When state goes from ok to alarm, creates an incident in PagerDuty
+      AlarmActions:
+      - !Ref DBPagerDutySNSTopic
+      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      OKActions:
+      - !Ref DBPagerDutySNSTopic
+      AlarmDescription: Read throughput above 20MB over 5mins
+      AlarmName: !Sub ${ProductName}-${EnvironmentName}-DBHighReadThroughput
+      MetricName: ReadThroughput
+      Namespace: AWS/RDS
+      Statistic: Average
+      EvaluationPeriods: 5
+      Period: 60
+      Threshold: 20000000
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+      - Name: DBInstanceIdentifier
+        Value: !Ref DbInstanceName
+
+  DBHighWriteThroughput:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      # When state goes from ok to alarm, creates an incident in PagerDuty
+      AlarmActions:
+      - !Ref DBPagerDutySNSTopic
+      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      OKActions:
+      - !Ref DBPagerDutySNSTopic
+      AlarmDescription: Write throughput above 20MB over 5mins
+      AlarmName: !Sub ${ProductName}-${EnvironmentName}-DBHighWriteThroughput
+      MetricName: WriteThroughput
+      Namespace: AWS/RDS
+      Statistic: Average
+      EvaluationPeriods: 5
+      Period: 60
+      Threshold: 20000000
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+      - Name: DBInstanceIdentifier
+        Value: !Ref DbInstanceName
+
+  DBHighDiskQueueDepth:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      # When state goes from ok to alarm, creates an incident in PagerDuty
+      AlarmActions:
+      - !Ref DBPagerDutySNSTopic
+      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      OKActions:
+      - !Ref DBPagerDutySNSTopic
+      AlarmDescription: Disk queue above 100 transactions
+      AlarmName: !Sub ${ProductName}-${EnvironmentName}-DBHighDiskQueueDepth
+      MetricName: DiskQueueDepth
+      Namespace: AWS/RDS
+      Statistic: Average
+      EvaluationPeriods: 5
+      Period: 60
+      Threshold: 100
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+      - Name: DBInstanceIdentifier
+        Value: !Ref DbInstanceName
+
+Outputs:
+  endPoint:
+    Description: DB endPoint
+    Value: !GetAtt DB.Endpoint.Address
+
+  DBinstanceId:
+    Description: DB instance name
+    Value: !Ref DB
+

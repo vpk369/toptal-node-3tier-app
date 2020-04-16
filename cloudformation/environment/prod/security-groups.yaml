@@ -1,0 +1,353 @@
+# Stack name ---  Toptal-PROD-SecurityGroups
+## Name: -QA-SecurityGroups
+AWSTemplateFormatVersion: 2010-09-09
+Description: This template creates required security groups for Toptal POC Website.
+
+##### PLEASE ENSURE ALL PARAMETER VALUES ARE CORRECT ###########
+Parameters:
+  vpcID:
+    Description: vpcID for Creating Security Group
+    Type: String
+    Default: 'vpc-003aecfc12ad3590d'
+
+  cidrIP:
+    Description: Enter VPC ID
+    Type: String
+    Default: '172.25.232.0/21'
+
+  vpnIp:
+    Description: Enter VPC ID
+    Type: String
+    Default: '183.83.166.17/32' #restricted to allow through my ip address only for now
+
+  # jenkins:
+  #   Description: Subnet IP Range for Jenkins and its slaves for deployment purpose
+  #   Type: String
+  #   Default: '172.25.32.0/24'
+
+  environmentName:
+    Description: Environment name
+    Type: String
+    AllowedValues: 
+      - DEV
+      - QA
+      - STAGE
+      - PROD
+      - PRE-PROD
+    Default: 'PROD'
+
+  productName:
+    Description: A Product name that will be used in resource names
+    Type: String
+    AllowedValues: 
+      - Toptal
+    Default: 'Toptal'
+  
+  CreatedByTag:
+    Description: Email ID of the team that creates this stack
+    Type: String
+    Default: vpk369@gmail.com
+
+Resources:
+  VPNSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${productName}-${environmentName}-VPN
+      GroupDescription: Allow ports 80  22 and 443 via VPN
+      VpcId: !Ref vpcID
+      SecurityGroupIngress:
+        - CidrIp: !Ref vpnIp
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+          Description: VPN Gateway
+        - CidrIp: !Ref vpnIp
+          FromPort: 443
+          IpProtocol: tcp
+          ToPort: 443
+          Description: VPN Gateway
+        - CidrIp: !Ref vpnIp
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+          Description: VPN Gateway
+          Description:  VPN Gateway
+        - CidrIp: !Ref vpnIp
+          FromPort: -1 
+          IpProtocol: icmp  
+          ToPort: -1
+          Description: VPN Gateway
+      Tags:
+        - Key: Name
+          Value: !Sub ${productName}-${environmentName}-VPN
+        - Key: Business / Service Owner
+          Value: CSE
+        - Key: Purpose
+          Value: Network
+        - Key: ProductID
+          Value: !Ref productName
+        - Key: Environment
+          Value: !Sub ${environmentName}
+        - Key: CreatedBy
+          Value: vpk369@gmail.com
+
+  WebServerSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${productName}-${environmentName}-Web-Server
+      GroupDescription: Allow ports to web server
+      VpcId: !Ref vpcID
+      SecurityGroupIngress:
+        - CidrIp: !Ref vpnIp
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+          Description: VPN Gateway
+        - CidrIp: !Ref vpnIp
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+          Description: VPN Gateway
+        - CidrIp: !GetAtt WebServerSG.GroupId
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+          Description: Traffic routed through Webserver loadbalancer
+        - CidrIp: !Ref vpnIp
+          FromPort: -1 
+          IpProtocol: icmp  
+          ToPort: -1
+          Description: VPN Gateway
+        # - IpProtocol: tcp
+        #   FromPort: 22
+        #   ToPort: 22
+        #   CidrIp:  !Ref jenkins  
+        #   Description: Jenkins IP Range
+        
+      Tags:
+        - Key: Name
+          Value: !Sub ${productName}-${environmentName}-Web-Server
+        - Key: Business / Service Owner
+          Value: CSE
+        - Key: Purpose
+          Value: Network
+        - Key: ProductID
+          Value: !Ref productName
+        - Key: Environment
+          Value: !Sub ${environmentName}
+        - Key: CreatedBy
+          Value: vpk369@gmail.com
+
+  WebServerLBSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${productName}-${environmentName}-Web-Server-LB
+      GroupDescription: Allow ports to web server-LB
+      VpcId: !Ref vpcID
+      SecurityGroupIngress:
+        - CidrIp: !Ref vpnIp
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+          Description: VPN Gateway
+        - CidrIp: !Ref vpnIp
+          FromPort: 443
+          IpProtocol: tcp
+          ToPort: 443
+          Description: VPN Gateway
+      Tags:
+        - Key: Name
+          Value: !Sub ${productName}-${environmentName}-Web-Server-LB
+        - Key: Business / Service Owner
+          Value: CSE
+        - Key: Purpose
+          Value: Network
+        - Key: ProductID
+          Value: !Ref productName
+        - Key: Environment
+          Value: !Sub ${environmentName}
+        - Key: CreatedBy
+          Value: vpk369@gmail.com
+
+  APIServerSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${productName}-${environmentName}-Web-Server
+      GroupDescription: Allow ports to web server
+      VpcId: !Ref vpcID
+      SecurityGroupIngress:
+        - CidrIp: !Ref vpnIp
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+          Description: VPN Gateway
+        - CidrIp: !Ref vpnIp
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+          Description: VPN Gateway
+        - CidrIp: !Ref vpnIp
+          FromPort: -1 
+          IpProtocol: icmp  
+          ToPort: -1
+          Description: VPN Gateway
+        # - IpProtocol: tcp
+        #   FromPort: 22
+        #   ToPort: 22
+        #   CidrIp:  !Ref jenkins  
+        #   Description: Jenkins IP Range
+        
+      Tags:
+        - Key: Name
+          Value: !Sub ${productName}-${environmentName}-Web-Server
+        - Key: Business / Service Owner
+          Value: CSE
+        - Key: Purpose
+          Value: Network
+        - Key: ProductID
+          Value: !Ref productName
+        - Key: Environment
+          Value: !Sub ${environmentName}
+        - Key: CreatedBy
+          Value: vpk369@gmail.com
+
+  APIServerLBSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${productName}-${environmentName}-API-Server-LB
+      GroupDescription: Allow ports to API Server-LB
+      VpcId: !Ref vpcID
+      SecurityGroupIngress:
+        - CidrIp: !Ref vpnIp
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+          Description: VPN Gateway
+        - CidrIp: !Ref vpnIp
+          FromPort: 443
+          IpProtocol: tcp
+          ToPort: 443
+          Description: VPN Gateway
+        - CidrIp: !GetAtt WebServerLBSG.GroupId
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+          Description: VPN Gateway
+        - CidrIp: !GetAtt WebServerLBSG.GroupId
+          FromPort: 443
+          IpProtocol: tcp
+          ToPort: 443
+          Description: VPN Gateway
+      Tags:
+        - Key: Name
+          Value: !Sub ${productName}-${environmentName}-Web-Server-LB
+        - Key: Business / Service Owner
+          Value: CSE
+        - Key: Purpose
+          Value: Network
+        - Key: ProductID
+          Value: !Ref productName
+        - Key: Environment
+          Value: !Sub ${environmentName}
+        - Key: CreatedBy
+          Value: vpk369@gmail.com
+
+# RDS
+  RdsSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${productName}-${environmentName}-RDS
+      GroupDescription: SG for RDS
+      VpcId: !Ref vpcID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !GetAtt APIServerSG.GroupId
+          Description: Data from API Server
+      Tags:
+        - Key: Name
+          Value: !Sub ${productName}-${environmentName}-RDS
+        - Key: Business / Service Owner
+          Value: CSE
+        - Key: Purpose
+          Value: Network
+        - Key: ProductID
+          Value: !Ref productName
+        - Key: Environment
+          Value: !Sub ${environmentName}
+        - Key: CreatedBy
+          Value: vpk369@gmail.com
+
+  MainSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: Allow all ports within the VPC.
+      VpcId: !Ref vpcID
+      Tags: 
+        - Key: Name
+          Value: !Sub ${productName}-${environmentName}-MainSG
+        - Key: Business / Service Owner
+          Value: CSE
+        - Key: Purpose
+          Value: Network
+        - Key: ProductID
+          Value: !Ref productName
+        - Key: Environment
+          Value: !Sub ${environmentName}
+        - Key: CreatedBy
+          Value: vpk369@gmail.com
+
+  MainSGIngress1:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: -1
+      SourceSecurityGroupId: !Ref MainSG
+      GroupId: !GetAtt MainSG.GroupId
+      Description: Within SG
+
+  MainSGIngress2:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: -1
+      CidrIp: !Ref cidrIP
+      GroupId: !GetAtt MainSG.GroupId
+      Description: Within VPC
+
+Outputs:
+  MainSgId:
+    Description:  security group ID which has all traffic allowed within the VPC
+    Export:
+     Name: !Join [ ":", [ !Ref "AWS::StackName", MainSG ] ]
+    Value: !GetAtt MainSG.GroupId
+
+  WebServerLBSgId:
+    Description: Security group ID for Web Server LB
+    Export:
+     Name: !Join [ ":", [ !Ref "AWS::StackName", WebServerLBSgId ] ]
+    Value: !GetAtt WebServerLBSG.GroupId
+
+  WebServerSgId:
+    Description: Security group ID for Web Server
+    Export:
+     Name: !Join [ ":", [ !Ref "AWS::StackName", WebServerSgId ] ]
+    Value: !GetAtt WebServerSG.GroupId
+    
+  APIServerLBSgId:
+    Description: Security group ID for Web Server LB
+    Export:
+     Name: !Join [ ":", [ !Ref "AWS::StackName", APIServerLBSgId ] ]
+    Value: !GetAtt APIServerLBSG.GroupId
+
+  APIServerSgId:
+    Description: Security group ID for Web Server
+    Export:
+     Name: !Join [ ":", [ !Ref "AWS::StackName", APIServerSgId ] ]
+    Value: !GetAtt APIServerSG.GroupId
+
+  RdsSgId:
+    Description: Security group ID for RDS
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", RdsSgId ] ]
+    Value: !GetAtt RdsSG.GroupId
+

@@ -1,0 +1,119 @@
+# Stack name ---  Toptal-PROD-Shared-Infra
+AWSTemplateFormatVersion: 2010-09-09
+Description: This template creates the shared infrastructure resource - S3 bucket.
+
+Parameters:
+  envName:
+    Description: Environment name for tagging
+    Type: String
+    AllowedValues: 
+      - DEV
+      - PROD
+      - PRE-PROD
+    Default: 'PROD'
+
+  ProductName:
+    Description: A Product name that will be prefixed to resource names
+    Type: String
+    AllowedValues: 
+      - Toptal
+    Default: 'Toptal'
+  
+  S3BucketName:
+    Type: String
+    Description: Enter the bucket name that contains Varnish Config Lambda.
+    AllowedValues:
+      - toptal-website-virginia
+    Default: "toptal-website-virginia"
+
+Resources:   
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      Tags: 
+        - 
+          Key: Business / Service Owner
+          Value: CSE
+        -
+          Key: Purpose
+          Value: FileSystem
+        -
+          Key: ProductID
+          Value: !Ref ProductName
+        -
+          Key: Environment
+          Value: !Sub ${envName}
+        -
+          Key: Name
+          Value: !Sub ${ProductName}-${envName}-Bucket
+        -
+          Key: CreatedBy
+          Value: vpk369@gmail.com
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProductName}-${envName}-Lambda-Execution
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: !Sub ${ProductName}-${envName}-Lambda-SSM
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - ssm:SendCommand
+            - ssm:List*
+            - ssm:Describe*
+            - ssm:Get*
+            - ssm:PutConfigurePackageResult
+            - ec2:DescribeInstances
+            - autoscaling:DescribeAutoScalingGroups
+            - autoscaling:DescribeScalingActivities
+            - logs:*
+            Resource: "*"
+      - PolicyName: !Sub ${ProductName}-${envName}-Lambda-Secrets
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - secretsmanager:GetResourcePolicy
+            - secretsmanager:GetSecretValue
+            - secretsmanager:DescribeSecret
+            - secretsmanager:PutSecretValue
+            - secretsmanager:ListSecretVersionIds
+            - secretsmanager:UpdateSecret
+            Resource: 
+              - !Sub arn:aws:secretsmanager:${AWS::Region}:250144837585:secret:${IamRoleInput}/*
+          - Effect: Allow
+            Action:
+            - secretsmanager:GetRandomPassword
+            - secretsmanager:CreateSecret
+            - secretsmanager:ListSecrets
+            Resource: "*"
+
+Outputs:
+
+  LambdaExecutionRole:
+    Description: Lambda Execution ARN
+    Export:
+     Name: !Join [ ":", [ !Ref "AWS::StackName", LambdaExecutionRole ] ]
+    Value: !GetAtt LambdaExecutionRole.Arn
+
+  BucketName:
+    Description: S3 Bucket name
+    Export:
+     Name: !Join [ ":", [ !Ref "AWS::StackName", S3Bucket ] ]
+    Value: !Ref S3Bucket
