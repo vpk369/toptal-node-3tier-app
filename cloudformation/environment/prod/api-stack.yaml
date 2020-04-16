@@ -92,7 +92,7 @@ Parameters:
     Default: toptal-screening
 
   ALBScheme:
-    Description: internal ALB
+    Description: Public ALB # can be internal ALB
     Type: String
     Default: public #can be internal
 

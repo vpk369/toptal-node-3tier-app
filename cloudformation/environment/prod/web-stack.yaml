@@ -92,9 +92,9 @@ Parameters:
     Default: toptal-screening
 
   ALBScheme:
-    Description: internal ALB
+    Description: Public ALB # can be internal ALB
     Type: String
-    Default: internal
+    Default: public #can be internal
 
   SecretsName:
     Description: Secrets name for Web Server
