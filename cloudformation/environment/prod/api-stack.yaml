@@ -553,7 +553,7 @@ Resources:
     #         elasticBeanstalkURL: !GetAtt Environment.EndpointURL
     #         pagerDutySNSTopic: !Ref ToptalPagerDutySNSTopic
     #     FunctionName: !Sub ${ProductName}-${envName}-EndpointVerification
-    #     Description: Lambda function for Toptal Parliament endpoint verification
+    #     Description: Lambda function for Toptal endpoint verification
     #     Handler: index.handler
     #     MemorySize: 128
     #     Role:
