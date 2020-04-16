@@ -171,6 +171,7 @@ Resources:
 
   APIServerSG:
     Type: AWS::EC2::SecurityGroup
+    DependsOn: APIServerLBSG
     Properties:
       GroupName: !Sub ${productName}-${environmentName}-Api-Server
       GroupDescription: Allow ports to Api server
@@ -186,6 +187,11 @@ Resources:
           IpProtocol: tcp
           ToPort: 80
           Description: VPN Gateway
+        - SourceSecurityGroupId: !GetAtt APIServerLBSG.GroupId
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+          Description: Traffic routed through Webserver loadbalancer
         - CidrIp: !Ref vpnIp
           FromPort: -1 
           IpProtocol: icmp  
