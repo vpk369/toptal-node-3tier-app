@@ -273,11 +273,11 @@ Resources:
               OptionName: Protocol
               Value: "HTTP"
 
-            - Namespace: !Sub
-              - "aws:elbv2:listener:${ListenPort2}"
-              - ListenPort2: 443
-              OptionName: Protocol
-              Value: "HTTPS"
+            # - Namespace: !Sub
+            #   - "aws:elbv2:listener:${ListenPort2}"
+            #   - ListenPort2: 443
+            #   OptionName: Protocol
+            #   Value: "HTTPS"
 
             # - Namespace: !Sub
             #   - "aws:elbv2:listener:${ListenPort2}"

@@ -55,6 +55,35 @@ Resources:
           Key: CreatedBy
           Value: vpk369@gmail.com
 
+  S3BucketPolicy: 
+    Type: AWS::S3::BucketPolicy
+    Properties: 
+      Bucket: !Ref S3Bucket
+      PolicyDocument: 
+        Statement: 
+          - 
+            Action: s3:*
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Resource:
+              Fn::Join:
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Ref S3Bucket
+                  - "/*"
+          -
+            Action: "s3:PutObject"
+            Effect: "Allow"
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root #change this if possible
+            Resource:
+              Fn::Join:
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Ref S3Bucket
+                  - "/*"
+
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
