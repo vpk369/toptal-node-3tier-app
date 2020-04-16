@@ -60,12 +60,12 @@ Parameters:
     Default: vpc-09fd98ff1e314078d
 
   EBSubnet:
-    Description: subnet id (public) for EB. This is used for AutoScaling group.
+    Description: subnet id (private) for EB instances . This is used for AutoScaling group.
     Type: String
-    Default: "subnet-03bbac50e0f1f3263,subnet-087c328a9ddbc1a52"
+    Default: "subnet-01d54f4ea499a1120,subnet-011deb299e8f5b0bd"
 
   ALBSubnets:
-    Description: subnet ids (public) for ALB
+    Description: subnet ids (public) for EB ALB
     Type: String
     Default: "subnet-03bbac50e0f1f3263,subnet-087c328a9ddbc1a52"
 
