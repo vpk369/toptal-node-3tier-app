@@ -9,12 +9,6 @@ Parameters:
       - PROD
     Default: 'PROD'
 
-  StacksRegion:
-    Value: !Ref "AWS::Region"
-
-  StacksAccountId:
-    Value: !Ref "AWS::AccountId"
-
   CreatedByTag:
     Description: Email ID of the team that creates this stack
     Type: String

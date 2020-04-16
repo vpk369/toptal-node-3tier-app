@@ -1,0 +1,627 @@
+# Stack name ---  Toptal-PROD-Api
+Description: This template creates EB application and environment for api servers.
+Parameters:
+  envName:
+    Description: Environment name for tagging
+    Type: String
+    AllowedValues: 
+      - DEV
+      - PROD
+    Default: 'PROD'
+
+  CreatedByTag:
+    Description: Email ID of the team that creates this stack
+    Type: String
+    Default: vpk369@gmail.com
+
+  ProductName:
+    Description: A Product name that will be prefixed to resource names
+    Type: String
+    AllowedValues: 
+      - Toptal
+    Default: 'Toptal'
+
+  AlbLogsBucket:
+    Description: Enter bucket name for Beanstalk ALB access logs
+    Type: String
+    AllowedValues:
+      - toptal-apisite-virginia
+    Default: toptal-apisite-virginia
+
+  AlbLogsBucketPrefix:
+    Description: Enter bucket prefix for ALB access logs
+    Type: String
+    AllowedValues:
+      - dev/apiserver-alb-logs
+      - prod/apiserver-alb-logs
+    Default: 'prod/apiserver-alb-logs'
+
+  # CertificateArn:
+  #   Description: Certificate ARN for ALB LB Listener
+  #   Type: String
+  #   Default: arn:aws:acm:eu-west-1:xxxxxx:certificate/2834cc16-45a6-4042-a910-ff6aa78789b6
+
+  lambdaName:
+    Description: Name of the Lambda function to insert api secrets
+    Type: String
+    AllowedValues: 
+      - ProvisionDatabaseSecrets
+      - ProvisionApiSecrets
+    Default: 'ProvisionApiSecrets'
+
+  EBAppName: 
+    Description: EB App name <Product>-<Environment>-<Asset>
+    Type: String
+    Default: Toptal-PROD-Api-App
+
+  EBVPC:
+    Type: String
+    Description: vpc id for EB
+    Default: 'vpc-003aecfc12ad3590d'
+
+  EBSubnet:
+    Description: subnet id for EB. This is used for AutoScaling group.
+    Type: String
+    Default: "subnet-0ac025acdbe71ab93,subnet-0c00baa4daa92fe99"
+
+  ALBSubnets:
+    Description: subnet ids for ALB
+    Type: String
+    Default: "subnet-0ac025acdbe71ab93,subnet-0c00baa4daa92fe99"
+
+  AutoScalingMinInstanceCount:
+    Description: ASG min instance count
+    Type: String
+    Default: 1
+
+  AutoScalingMaxInstanceCount:
+    Description: ASG max instance count
+    Type: String
+    Default: 2
+
+  AutoScalingInstanceType:
+    Description: AutoScaling Instance Type
+    Type: String
+    AllowedValues:
+      - t2.micro
+    Default: t2.micro
+
+  EC2KeyPairName:
+    Description: EC2 key pair name
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: Toptal-Virginia
+
+  ALBScheme:
+    Description: internal ALB
+    Type: String
+    Default: internal
+
+  SecretsName:
+    Description: Secrets name for Api Server
+    Type: String
+    Default: "PROD/Toptal/ApiEB"
+
+  SolutionStackName:
+    Description: Solution Stack Name for EB platform
+    Type: String
+    Default: Docker running on 64bit Amazon Linux/2.12.17
+
+  SecurityGroupStackName:
+    Description: Name of the Security Groups stack. This is used in exporting SG values from that stack.
+    Type: String
+    Default: "Toptal-PROD-SecurityGroups"
+
+  SharedInfraStackName:
+    Description: Name of the SharedInfra stack. This is used in exporting SNS topic ARN.
+    Type: String
+    Default: "Toptal-PROD-Shared-Infra"
+
+  EbEnvironmentURL:
+    Description: prefix for your Beanstalk environment URL.
+    Type: String
+    Default: "Toptal-PROD"
+
+Resources:
+
+    ElasticBeanstalkServiceRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        AssumeRolePolicyDocument: |
+          {
+            "Statement": [{
+              "Effect": "Allow",
+              "Principal": { "Service": [ "elasticbeanstalk.amazonaws.com" ]},
+              "Action": [ "sts:AssumeRole" ]
+            }]
+          }
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSElasticBeanstalkEnhancedHealth
+          - arn:aws:iam::aws:policy/service-role/AWSElasticBeanstalkService
+          - arn:aws:iam::aws:policy/AmazonSNSFullAccess
+
+    EBApplication:
+      Type: AWS::ElasticBeanstalk::Application
+      Properties: 
+          ApplicationName: !Ref EBAppName
+    
+    ConfigurationTemplate:
+      Type: AWS::ElasticBeanstalk::ConfigurationTemplate
+      Properties:
+          ApplicationName: !Ref EBAppName
+          SolutionStackName: !Ref SolutionStackName
+          OptionSettings:
+            #deployment options
+
+            - Namespace: aws:elasticbeanstalk:command
+              OptionName: DeploymentPolicy
+              Value: RollingWithAdditionalBatch
+
+            - Namespace: aws:elasticbeanstalk:command
+              OptionName: BatchSizeType
+              Value: Percentage
+ 
+            - Namespace: aws:elasticbeanstalk:command
+              OptionName: BatchSize
+              Value: 100
+
+            - Namespace: aws:elasticbeanstalk:environment
+              OptionName: EnvironmentType
+              Value: LoadBalanced
+
+            - Namespace: aws:elasticbeanstalk:environment
+              OptionName: LoadBalancerType
+              Value: application
+
+            - Namespace: aws:elasticbeanstalk:environment
+              OptionName: ServiceRole
+              Value: !Ref ElasticBeanstalkServiceRole
+
+              # autoscaling settings
+            - Namespace: aws:autoscaling:asg
+              OptionName: MinSize
+              Value: !Ref AutoScalingMinInstanceCount
+
+            - Namespace: aws:autoscaling:asg
+              OptionName: MaxSize
+              Value: !Ref AutoScalingMaxInstanceCount
+
+            - Namespace: aws:autoscaling:launchconfiguration
+              OptionName: SecurityGroups
+              Value:
+                Fn::ImportValue:
+                  !Sub "${SecurityGroupStackName}:apiserverLBSgId" 
+            
+            - Namespace: aws:autoscaling:launchconfiguration
+              OptionName: SecurityGroups
+              Value:
+                Fn::ImportValue:
+                  !Sub "${SecurityGroupStackName}:apiserverSgId"
+            - Namespace: aws:autoscaling:launchconfiguration
+              OptionName: InstanceType
+              Value: !Ref AutoScalingInstanceType
+
+            - Namespace: aws:autoscaling:launchconfiguration
+              OptionName: IamInstanceProfile
+              Value: !Ref AppInstanceProfile
+
+            - Namespace: aws:autoscaling:launchconfiguration
+              OptionName: EC2KeyName
+              Value: !Ref EC2KeyPairName
+
+            - Namespace: aws:autoscaling:trigger
+              OptionName: MeasureName
+              Value: CPUUtilization
+
+            - Namespace: aws:autoscaling:trigger
+              OptionName: Unit
+              Value: Percent
+
+            - Namespace: aws:autoscaling:trigger
+              OptionName: UpperThreshold
+              Value: 50
+
+            - Namespace: aws:autoscaling:trigger
+              OptionName: LowerThreshold
+              Value: 30
+
+            - Namespace: aws:ec2:vpc
+              OptionName: VPCId
+              Value: !Ref EBVPC
+
+            - Namespace: aws:ec2:vpc
+              OptionName: Subnets
+              Value: !Ref EBSubnet
+
+            - Namespace: aws:ec2:vpc
+              OptionName: ELBSubnets
+              Value: !Ref ALBSubnets
+
+            - Namespace: aws:ec2:vpc
+              OptionName: ELBScheme
+              Value: !Ref ALBScheme
+
+            - Namespace: aws:elbv2:listener:default
+              OptionName: ListenerEnabled
+              Value: "true"
+
+            - Namespace: aws:elbv2:loadbalancer
+              OptionName: SecurityGroups
+              Value:
+                Fn::ImportValue:
+                  !Sub "${SecurityGroupStackName}:apiserverLBSgId" 
+
+            - Namespace: aws:elbv2:loadbalancer
+              OptionName: AccessLogsS3Bucket
+              Value: !Ref AlbLogsBucket
+
+            - Namespace: aws:elbv2:loadbalancer
+              OptionName: AccessLogsS3Enabled
+              Value: "true"
+
+            - Namespace: aws:elbv2:loadbalancer
+              OptionName: AccessLogsS3Prefix
+              Value: !Ref AlbLogsBucketPrefix
+
+            - Namespace: aws:elbv2:listenerrule:default
+              OptionName: PathPatterns
+              Value: "/*"
+
+            - Namespace: !Sub
+              - "aws:elbv2:listener:${ListenPort}"
+              - ListenPort: 80
+              OptionName: Protocol
+              Value: "HTTP"
+
+            - Namespace: !Sub
+              - "aws:elbv2:listener:${ListenPort2}"
+              - ListenPort2: 443
+              OptionName: Protocol
+              Value: "HTTPS"
+
+            # - Namespace: !Sub
+            #   - "aws:elbv2:listener:${ListenPort2}"
+            #   - ListenPort2: 443
+            #   OptionName: SSLCertificateArns
+            #   Value: !Ref CertificateArn
+
+              #health check path?
+
+            - Namespace: aws:elasticbeanstalk:environment:process:default
+              OptionName: HealthCheckPath
+              Value: /
+
+            - Namespace: aws:elasticbeanstalk:application
+              OptionName: Application Healthcheck URL
+              Value: /
+
+            - Namespace: aws:elasticbeanstalk:environment:process:default
+              OptionName: MatcherHTTPCode
+              Value: 200
+
+    Environment:
+      Type: AWS::ElasticBeanstalk::Environment
+      Properties:
+        ApplicationName: !Ref EBAppName 
+        CNAMEPrefix: !Ref EbEnvironmentURL 
+        TemplateName: !Ref ConfigurationTemplate
+        EnvironmentName: !Join [ "-", [ !Ref ProductName, !Ref envName, apiserver] ] 
+        Tags:
+          - 
+            Key: Business / Service Owner
+            Value: CSE
+          -
+            Key: Purpose
+            Value: Api
+          -
+            Key: ProductID
+            Value: !Ref ProductName
+          -
+            Key: Environment
+            Value: !Sub ${envName}
+          -
+            Key: Name
+            Value: !Sub ${ProductName}-${envName}
+          - 
+            Key: CreatedBy
+            Value: !Sub ${CreatedByTag}
+      DependsOn:
+        - ConfigurationTemplate
+      
+    # IAM resources
+    AppRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        ManagedPolicyArns: 
+          - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+          - arn:aws:iam::250144837585:policy/Volume_Extension_Default
+          - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+          - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+        AssumeRolePolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Principal:
+                Service:
+                  - ec2.amazonaws.com
+              Action:
+                - sts:AssumeRole
+
+    AppPolicies:
+      Type: AWS::IAM::Policy
+      Properties:
+        PolicyName: !Sub ${ProductName}-${envName}-Secrets
+        Roles:
+        - !Ref AppRole
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - secretsmanager:GetRandomPassword
+                - secretsmanager:GetResourcePolicy
+                - secretsmanager:GetSecretValue
+                - secretsmanager:DescribeSecret
+                - secretsmanager:ListSecrets
+                - secretsmanager:ListSecretVersionIds
+                - secretsmanager:UpdateSecret
+                - secretsmanager:PutSecretValue
+              Resource: "*"
+
+    AppPolicies2:
+      Type: AWS::IAM::Policy
+      Properties:
+        PolicyName: !Sub ${ProductName}-${envName}-ECR-ReadOnly
+        Roles:
+        - !Ref AppRole
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - ecr:GetDownloadUrlForLayer
+                - ecr:BatchGetImage
+                - ecr:DescribeImages
+                - ecr:GetAuthorizationToken
+                - ecr:DescribeRepositories
+                - ecr:ListImages
+                - ecr:BatchCheckLayerAvailability
+                - ecr:GetRepositoryPolicy
+              Resource: "*"
+
+    AppPolicies3:
+      Type: AWS::IAM::Policy
+      Properties:
+        PolicyName: !Sub ${ProductName}-${envName}-EB-ReadOnly
+        Roles:
+        - !Ref AppRole
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - elasticbeanstalk:DescribeEnvironments
+              Resource: 
+                - !Sub arn:aws:elasticbeanstalk:${AWS::Region}:${AWS::AccountId}:environment/*
+
+    AppInstanceProfile:
+      Type: AWS::IAM::InstanceProfile
+      Properties:
+        Path: /
+        Roles:
+        - !Ref AppRole
+
+    CustomLambda:
+      Type: AWS::Lambda::Function
+      Properties: 
+        Code:
+          ZipFile: >
+            var response = require('./cfn-response');
+            var AWS = require('aws-sdk');
+            var secretsmanager = new AWS.SecretsManager();
+            exports.handler = (event, context, callback) => {
+              console.log("REQUEST RECEIVED:\n" + JSON.stringify(event));
+              var ebappname = event.ResourceProperties.EBAppName;
+              console.log("EB APP NAME IS : " +ebappname);
+              var secretsName = event.ResourceProperties.SecretsNameApp;
+              console.log("SECRETS NAME FOR APP IS : " +secretsName);
+              var appRole = event.ResourceProperties.AppRole;
+              secrets(secretsName,ebappname,appRole);
+              function secrets(secretsName,ebappname,appRole) {
+                const new_secret = {
+                  'EB_APPLICATION_NAME': ebappname,
+                  'APP_ROLE': appRole,
+                  'NEWRELIC_APPLICATION_ID':'',
+                  'NEWRELIC_API_KEY': ''
+                };
+                var params = {
+                  Name: secretsName, 
+                  SecretString: JSON.stringify(new_secret),
+                };
+                secretsmanager.createSecret(params, function(err, data) {
+                  if (err) console.log(err, err.stack); 
+                  else     console.log(data);           
+                });  
+              }          
+              var responseData = {'passwordcheck': 'Password Valid!'};
+              response.send(event, context, response.SUCCESS, responseData);
+            };
+        FunctionName: !Join [ "-", [ !Ref ProductName, !Ref envName, apiserver, !Ref lambdaName ] ]
+        Description: Lambda function for Toptal Api secrets
+        Handler: index.handler
+        MemorySize: 128
+        Role:
+          Fn::ImportValue:
+            !Sub "${SharedInfraStackName}:LambdaExecutionRole" 
+        Runtime: nodejs12.x
+        Timeout: 300
+        Tags:
+          - 
+            Key: Business / Service Owner
+            Value: CSE
+          -
+            Key: Purpose
+            Value: AppSecrets
+          -
+            Key: ProductID
+            Value: !Ref ProductName
+          -
+            Key: Environment
+            Value: !Sub ${envName}
+          - 
+            Key: Name
+            Value: !Join [ "-", [ !Ref ProductName, !Ref envName, !Ref lambdaName ] ]
+
+    CustomResourceLambda:
+      Type: "Custom::Lambda"
+      DependsOn: CustomLambda
+      Version: "1.0"
+      Properties:
+        ServiceToken: !GetAtt CustomLambda.Arn
+        EBAppName: !Ref EBAppName
+        SecretsNameApp: !Ref SecretsName
+        AppRole: !Ref AppRole
+
+    # ToptalPagerDutySNSTopic:
+    #   Type: AWS::SNS::Topic
+    #   Properties:
+    #     DisplayName: PagerDuty Integration for Toptal
+    #     Subscription:
+    #     - Endpoint: "vpk369@gmail.com"
+    #       Protocol: "email"
+    # EndpointVerification:
+    #   Type: AWS::Lambda::Function
+    #   Properties:
+    #     Code:
+    #       ZipFile: >
+    #         const response = require('./cfn-response');
+    #         const AWS = require('aws-sdk');
+    #         const elasticbeanstalk = new AWS.ElasticBeanstalk();
+    #         const http = require('http');
+    #         exports.handler = (event, context, callback) => {
+    #           function testBeanstalkHealth(hostURL) {
+    #             const options = {
+    #               port: 80,
+    #               hostname: hostURL,
+    #               path: 'graphql??operationName=ArticleQuery&variables=%7B%22postName%22%3A%22%D8%A7%D9%84%D8%AA%D8%AC%D8%A7%D8%B1%D8%A9-%D8%A7%D9%84%D8%A5%D9%84%D9%83%D8%AA%D8%B1%D9%88%D9%86%D9%8A%D8%A9-%D9%85%D9%86-%D8%A8%D9%86%D8%A7%D8%A1-%D8%A7%D9%84%D8%AB%D9%82%D8%A9-%D8%A5%D9%84%22%2C%22options%22%3A%7B%22postType%22%3A%22%22%2C%22preview%22%3Afalse%7D%7D&extensions=%7B%7D',
+    #               headers: {
+    #                 'Content-Type': 'application/json',
+    #                 'wp-site': 'moana'
+    #               }
+    #             };
+
+    #             return new Promise((resolve, reject) => {
+    #               let response = ''
+    #               http.get(options, res => {
+    #                 if (res.statusCode != 200) {
+    #                   reject('Returned non 200 status code.');
+    #                 }
+    #                 res.on('data', chunk => response += chunk);
+    #                 res.on('end', () => {
+    #                   let json = JSON.parse(response);
+
+    #                   if (json.errors && json.errors.length > 0) {
+    #                     reject(json.errors.reduce((a, b) => a + b + '\n', ''));
+    #                   } else {
+    #                     resolve();
+    #                   }
+    #                 });
+    #               });
+    #             });
+    #           }
+
+    #           const elasticBeanstalkURL = os.environ.elasticBeanstalkURL;
+    #           try {
+    #             await testBeanstalkHealth(elasticBeanstalkURL);
+    #           } catch (message) {
+    #             const pagerDutySNSTopic = os.environ.pagerDutySNSTopic
+    #             const sns = new AWS.SNS();
+    #             const parameters = {
+    #               Message: `Unable to fetch results from Toptal Elastic Beanstalk ${elasticBeanstalkURL}. Message was ${message}`,
+    #               Subject: `Unable to fetch results from Toptal Elastic Beanstalk ${elasticBeanstalkURL}`,
+    #               TopicArn: pagerDutySNSTopic
+    #             };
+    #             sns.publish(parameters)
+    #           }
+    #         };
+    #     Environment:
+    #       Variables:
+    #         elasticBeanstalkURL: !GetAtt Environment.EndpointURL
+    #         pagerDutySNSTopic: !Ref ToptalPagerDutySNSTopic
+    #     FunctionName: !Sub ${ProductName}-${envName}-EndpointVerification
+    #     Description: Lambda function for Toptal Parliament endpoint verification
+    #     Handler: index.handler
+    #     MemorySize: 128
+    #     Role:
+    #       Fn::ImportValue:
+    #         !Sub "${SharedInfraStackName}:LambdaExecutionRole"
+    #     Runtime: nodejs12.x
+    #     Timeout: 300
+    #     Tags:
+    #       - 
+    #         Key: Business / Service Owner
+    #         Value: CSE
+    #       -
+    #         Key: Purpose
+    #         Value: ApiSecrets
+    #       -
+    #         Key: ProductID
+    #         Value: !Ref ProductName
+    #       -
+    #         Key: Environment
+    #         Value: !Sub ${envName}
+    #       - 
+    #         Key: Name
+    #         Value: !Sub ${ProductName}-${envName}-EndpointVerification
+    #       -
+    #         Key: CreatedBy
+    #         Value: vpk369@gmail.com
+
+    # ScheduleEvery10Minutes:
+    #   Type: AWS::Events::Rule
+    #   Properties:
+    #     Description: "Run endpoint verification every 10 minutes"
+    #     ScheduleExpression: "rate(10 minutes)"
+    #     State: "ENABLED"
+    #     Targets:
+    #       -
+    #         Arn:
+    #           Fn::GetAtt:
+    #             - "EndpointVerification"
+    #             - "Arn"
+    #         Id: !Ref EndpointVerification
+
+    # PermissionForEventsToInvokeLambda:
+    #   Type: AWS::Lambda::Permission
+    #   Properties:
+    #     FunctionName:
+    #       Ref: EndpointVerification
+    #     Action: "lambda:InvokeFunction"
+    #     Principal: "events.amazonaws.com"
+    #     SourceArn:
+    #       Fn::GetAtt:
+    #         - "ScheduleEvery10Minutes"
+    #         - "Arn"
+
+Outputs:
+  EndPoint:
+    Description: Toptal Api EndPoint url
+    Value: !GetAtt Environment.EndpointURL
+    
+  AppSecretsName:
+    Description: Name of the api secrets stored
+    Value: !Ref SecretsName
+    
+  EbEnvironmentName:
+    Value: !Ref Environment
+
+  # ToptalPagerDutySnsTopic:
+  #   Description: PagerDuty SNS topic ARN
+  #   Export:
+  #    Name: !Join [ ":", [ !Ref "AWS::StackName", ToptalPagerDutySNSTopic ] ]
+  #   Value: !Ref ToptalPagerDutySNSTopic
