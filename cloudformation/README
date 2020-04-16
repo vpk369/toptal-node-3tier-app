@@ -1,0 +1,7 @@
+Stack run order:
+Network
+Shared
+Security Groups
+DB
+API
+Web
