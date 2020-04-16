@@ -25,8 +25,8 @@ Parameters:
     Description: Enter bucket name for Beanstalk ALB access logs
     Type: String
     AllowedValues:
-      - toptal-apisite-virginia
-    Default: toptal-apisite-virginia
+      - toptal-website-virginia
+    Default: 'toptal-website-virginia'
 
   AlbLogsBucketPrefix:
     Description: Enter bucket prefix for ALB access logs

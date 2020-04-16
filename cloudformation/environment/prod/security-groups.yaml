@@ -8,12 +8,12 @@ Parameters:
   vpcID:
     Description: vpcID for Creating Security Group
     Type: String
-    Default: 'vpc-003aecfc12ad3590d'
+    Default: 'vpc-09fd98ff1e314078d'
 
   cidrIP:
     Description: Enter VPC ID
     Type: String
-    Default: '172.25.232.0/21'
+    Default: '172.24.32.0/22'
 
   vpnIp:
     Description: Enter VPC ID
@@ -71,7 +71,6 @@ Resources:
           IpProtocol: tcp
           ToPort: 80
           Description: VPN Gateway
-          Description:  VPN Gateway
         - CidrIp: !Ref vpnIp
           FromPort: -1 
           IpProtocol: icmp  

@@ -26,7 +26,7 @@ Parameters:
     Type: String
     AllowedValues:
       - toptal-website-virginia
-    Default: toptal-website-virginia
+    Default: 'toptal-website-virginia'
 
   AlbLogsBucketPrefix:
     Description: Enter bucket prefix for ALB access logs
