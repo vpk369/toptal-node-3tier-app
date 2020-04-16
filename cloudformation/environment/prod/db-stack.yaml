@@ -10,7 +10,7 @@ Parameters:
   SecurityGroupStackName:
     Description: Name of the Security Groups stack. This is used in exporting SG values from that stack.
     Type: String
-    Default: "Toptal-PROD-SecurityGroup"
+    Default: "Toptal-PROD-SecurityGroups"
 
   CreatedByTag:
     Description: Email ID of the team that creates this stack
@@ -46,9 +46,9 @@ Parameters:
     Default: Toptal-PROD-DBinstance
 
   SubnetIds:
-    Description: SubnetIds for Subnet Group
+    Description: SubnetIds (private) for Subnet Group
     Type: List<AWS::EC2::Subnet::Id>
-    Default: "subnet-0e73df693f857e7b8,subnet-0518c906f2b731475"
+    Default: "subnet-01d54f4ea499a1120,subnet-011deb299e8f5b0bd"
 
   DBInstanceClass:
     Description: DB Instance Class for the db. Select sizing based on the environment; PROD being db.r5.2xlarge and DEV being db.t3.small
@@ -80,9 +80,9 @@ Parameters:
     Default: "ToptalProdDB"
 
   SharedInfraStackName:
-    Description: Name of the SharedInfra stack. This is used in exporting SNS topic ARN.
+    Description: Name of the Shared-Infra stack. This is used in exporting SNS topic ARN.
     Type: String
-    Default: "Toptal-PROD-SharedInfra"
+    Default: "Toptal-PROD-Shared-Infra"
   
   StorageType:
     Description: Storage type for MySQL

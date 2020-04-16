@@ -57,17 +57,17 @@ Parameters:
   EBVPC:
     Type: String
     Description: vpc id for EB
-    Default: 'vpc-003aecfc12ad3590d'
+    Default: vpc-09fd98ff1e314078d
 
   EBSubnet:
-    Description: subnet id for EB. This is used for AutoScaling group.
+    Description: subnet id (public) for EB. This is used for AutoScaling group.
     Type: String
-    Default: "subnet-0ac025acdbe71ab93,subnet-0c00baa4daa92fe99"
+    Default: "subnet-03bbac50e0f1f3263,subnet-087c328a9ddbc1a52"
 
   ALBSubnets:
-    Description: subnet ids for ALB
+    Description: subnet ids (public) for ALB
     Type: String
-    Default: "subnet-0ac025acdbe71ab93,subnet-0c00baa4daa92fe99"
+    Default: "subnet-03bbac50e0f1f3263,subnet-087c328a9ddbc1a52"
 
   AutoScalingMinInstanceCount:
     Description: ASG min instance count
@@ -89,7 +89,7 @@ Parameters:
   EC2KeyPairName:
     Description: EC2 key pair name
     Type: AWS::EC2::KeyPair::KeyName
-    Default: Toptal-Virginia
+    Default: toptal-screening
 
   ALBScheme:
     Description: internal ALB
@@ -104,7 +104,7 @@ Parameters:
   SolutionStackName:
     Description: Solution Stack Name for EB platform
     Type: String
-    Default: Docker running on 64bit Amazon Linux/2.12.17
+    Default: 64bit Amazon Linux 2 v3.0.0 running Docker
 
   SecurityGroupStackName:
     Description: Name of the Security Groups stack. This is used in exporting SG values from that stack.
@@ -335,7 +335,6 @@ Resources:
         Path: /
         ManagedPolicyArns: 
           - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
-          - arn:aws:iam::250144837585:policy/Volume_Extension_Default
           - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
           - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
         AssumeRolePolicyDocument:
