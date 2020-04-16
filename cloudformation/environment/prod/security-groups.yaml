@@ -10,10 +10,10 @@ Parameters:
     Type: String
     Default: 'vpc-09fd98ff1e314078d'
 
-  cidrIP:
+  NetworkStackName:
     Description: Enter VPC ID
     Type: String
-    Default: '172.24.32.0/22'
+    Default: 'Toptal-PROD-Network'
 
   vpnIp:
     Description: Enter VPC ID
@@ -316,7 +316,9 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       IpProtocol: -1
-      CidrIp: !Ref cidrIP
+      CidrIp:
+        Fn::ImportValue:
+          !Sub "${NetworkStackName}:VPCCidr"
       GroupId: !GetAtt MainSG.GroupId
       Description: Within VPC
 
