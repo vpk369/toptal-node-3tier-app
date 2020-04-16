@@ -92,6 +92,7 @@ Resources:
 
   WebServerSG:
     Type: AWS::EC2::SecurityGroup
+    DependsOn: WebServerLBSG
     Properties:
       GroupName: !Sub ${productName}-${environmentName}-Web-Server
       GroupDescription: Allow ports to web server
@@ -107,7 +108,7 @@ Resources:
           IpProtocol: tcp
           ToPort: 80
           Description: VPN Gateway
-        - CidrIp: !GetAtt WebServerSG.GroupId
+        - SourceSecurityGroupId: !GetAtt WebServerLBSG.GroupId
           FromPort: 80
           IpProtocol: tcp
           ToPort: 80
@@ -171,8 +172,8 @@ Resources:
   APIServerSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub ${productName}-${environmentName}-Web-Server
-      GroupDescription: Allow ports to web server
+      GroupName: !Sub ${productName}-${environmentName}-Api-Server
+      GroupDescription: Allow ports to Api server
       VpcId: !Ref vpcID
       SecurityGroupIngress:
         - CidrIp: !Ref vpnIp
@@ -198,7 +199,7 @@ Resources:
         
       Tags:
         - Key: Name
-          Value: !Sub ${productName}-${environmentName}-Web-Server
+          Value: !Sub ${productName}-${environmentName}-Api-Server
         - Key: Business / Service Owner
           Value: CSE
         - Key: Purpose
@@ -213,7 +214,7 @@ Resources:
   APIServerLBSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub ${productName}-${environmentName}-API-Server-LB
+      GroupName: !Sub ${productName}-${environmentName}-Api-Server-LB
       GroupDescription: Allow ports to API Server-LB
       VpcId: !Ref vpcID
       SecurityGroupIngress:
@@ -227,19 +228,19 @@ Resources:
           IpProtocol: tcp
           ToPort: 443
           Description: VPN Gateway
-        - CidrIp: !GetAtt WebServerLBSG.GroupId
+        - SourceSecurityGroupId: !GetAtt WebServerLBSG.GroupId
           FromPort: 80
           IpProtocol: tcp
           ToPort: 80
           Description: VPN Gateway
-        - CidrIp: !GetAtt WebServerLBSG.GroupId
+        - SourceSecurityGroupId: !GetAtt WebServerLBSG.GroupId
           FromPort: 443
           IpProtocol: tcp
           ToPort: 443
           Description: VPN Gateway
       Tags:
         - Key: Name
-          Value: !Sub ${productName}-${environmentName}-Web-Server-LB
+          Value: !Sub ${productName}-${environmentName}-Api-Server-LB
         - Key: Business / Service Owner
           Value: CSE
         - Key: Purpose
@@ -315,7 +316,7 @@ Resources:
 
 Outputs:
   MainSgId:
-    Description:  security group ID which has all traffic allowed within the VPC
+    Description: Security group ID which has all traffic allowed within the VPC
     Export:
      Name: !Join [ ":", [ !Ref "AWS::StackName", MainSG ] ]
     Value: !GetAtt MainSG.GroupId

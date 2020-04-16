@@ -104,7 +104,7 @@ Parameters:
     Default: "PROD/Toptal/DB"
 
 
-Metadata: 
+# Metadata: 
   # AWS::CloudFormation::Interface: 
   #   ParameterGroups: 
   #     - 
