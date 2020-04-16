@@ -71,18 +71,18 @@ Resources:
                 - ''
                 - - 'arn:aws:s3:::'
                   - !Ref S3Bucket
-                  - "/*"
+                  - '/*'
           -
-            Action: "s3:PutObject"
+            Action: s3:PutObject
             Effect: "Allow"
             Principal:
-              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root #change this if possible
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
             Resource:
               Fn::Join:
                 - ''
                 - - 'arn:aws:s3:::'
                   - !Ref S3Bucket
-                  - "/*"
+                  - !Sub '/*/*/AWSLogs/${AWS::AccountId}/*'
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role

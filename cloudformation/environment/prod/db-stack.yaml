@@ -173,6 +173,9 @@ Resources:
   DB:
     Type: "AWS::RDS::DBInstance"
     Properties:
+      BackupRetentionPeriod: 1 # trun on automated backups and store it for a day
+      PreferredBackupWindow: "22:30-23:30" #UTC timezone
+      PreferredMaintenanceWindow: "mon:23:30-tue:00:30" #UTC timezone
       AllocatedStorage: !Ref AllocatedStorage
       DBInstanceIdentifier: !Ref DbInstanceName
       DBSubnetGroupName: !Ref DBSubnetGroup
