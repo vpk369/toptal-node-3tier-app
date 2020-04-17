@@ -426,6 +426,7 @@ Resources:
             exports.handler = (event, context, callback) => {
               console.log("REQUEST RECEIVED:\n" + JSON.stringify(event));
               var ebappname = event.ResourceProperties.EBAppName;
+              var ebappurl = event.ResourceProperties.EBAppUrl;
               console.log("EB APP NAME IS : " +ebappname);
               var secretsName = event.ResourceProperties.SecretsNameApp;
               console.log("SECRETS NAME FOR APP IS : " +secretsName);
@@ -435,8 +436,7 @@ Resources:
                 const new_secret = {
                   'EB_APPLICATION_NAME': ebappname,
                   'APP_ROLE': appRole,
-                  'NEWRELIC_APPLICATION_ID':'',
-                  'NEWRELIC_API_KEY': ''
+                  'EB_APPLICATION_URL': ebappurl
                 };
                 var params = {
                   Name: secretsName, 
@@ -483,6 +483,7 @@ Resources:
       Properties:
         ServiceToken: !GetAtt CustomLambda.Arn
         EBAppName: !Ref EBAppName
+        EBAppUrl: !GetAtt Environment.EndpointURL
         SecretsNameApp: !Ref SecretsName
         AppRole: !Ref AppRole
 

@@ -9,3 +9,5 @@ Web
 
 fix: replace all hardcoded values to use variables
      ssh is open for eb instances
+     setup cloud front cdn
+     save dburl and eburl to secrets or else generate in deploy script and save in both apps
