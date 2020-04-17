@@ -1,6 +1,6 @@
 # Stack name ---  Toptal-PROD-DB
 #check if we need MultiAZ for prod -- ensure below values are set
-Description: This template creates MySQL DB.
+Description: This template creates PostgreSQL DB.
 Parameters:
   AllocatedStorage:
     Description: The amount of storage (in gigabytes) to be initially allocated for the database instance.
@@ -62,17 +62,17 @@ Parameters:
   Engine:
     Description: Engine for the db
     Type: String
-    Default: "mysql"
+    Default: "Postgres"
 
   EngineVersion:
     Description: Engine Version for the db
     Type: String
-    Default: "5.7.26"
+    Default: "10.9"
 
   MasterUsername:
     Description: Master username for the DB
     Type: String
-    Default: "Admin"
+    Default: "ToptalDBAdmin"
 
   UserPassword:
     Description: user Password for the DB
@@ -82,10 +82,10 @@ Parameters:
   RDSServiceRole:
     Description: ARN of the RDS service role so as to publish logs to cloud watch
     Type: String
-    Default: "arn:aws:iam::250144837585:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"
+    Default: "arn:aws:iam::894541307925:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"
 
   DatabaseName:
-    Description: DB Name for RDS MySQLDB.
+    Description: DB Name for RDS PostgreSQLDB Port should be 5432
     Type: String
     Default: "ToptalProdDB"
 
@@ -103,7 +103,7 @@ Parameters:
     Default: "Toptal-PROD-Shared-Infra"
   
   StorageType:
-    Description: Storage type for MySQL
+    Description: Storage type for PostgreSQL
     Type: String
     AllowedValues:
       - standard
@@ -142,16 +142,14 @@ Resources:
       DBInstanceIdentifier: !Ref DbInstanceName
       DBSubnetGroupName: !Ref DBSubnetGroup
       EnableCloudwatchLogsExports:
-        - audit
-        - general
-        - slowquery
-        - error
+        - postgresql
+        - upgrade
       Engine: !Ref Engine
       EngineVersion: !Ref EngineVersion
       MasterUsername: !Ref MasterUsername
       MasterUserPassword: !Ref UserPassword
       PubliclyAccessible: 'false'
-      LicenseModel: "general-public-license"
+      LicenseModel: "postgresql-license"
       DBInstanceClass: !Ref DBInstanceClass
       StorageType: !Ref StorageType
       MultiAZ: "False"
