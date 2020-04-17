@@ -121,45 +121,6 @@ Parameters:
     Type: String
     Default: "PROD/Toptal/DB"
 
-
-# Metadata: 
-  # AWS::CloudFormation::Interface: 
-  #   ParameterGroups: 
-  #     - 
-  #       Label: 
-  #         default: "Network Configuration"
-  #       Parameters: 
-  #         - SubnetIds
-  #     -
-  #       Label:
-  #         default: "Database Configuration"
-  #       Parameters:
-  #         - DatabaseName
-  #         - DBInstanceClass
-  #         - StorageType
-  #         - IOPS
-  #         - AllocatedStorage
-  #         - DbClusterName
-  #         - DbInstanceName
-  #         - Engine
-  #         - EngineVersion
-  #         - MasterUsername
-  #         - MasterUserPassword
-  #         - RDSServiceRole
-  #     - 
-  #       Label:
-  #         default: "General Configuration"
-  #       Parameters:
-  #         - EnvironmentName
-  #         - ProductName
-  #         - SecretsName
-  #     - 
-  #       Label: 
-  #         default: "CloudFormation Stack References"
-  #       Parameters:
-  #         - SecurityGroupStackName
-  #         - SharedInfraStackName
-
 Resources:
   DBSubnetGroup:
     Type: "AWS::RDS::DBSubnetGroup"
@@ -172,7 +133,7 @@ Resources:
           Value: !Sub ${ProductName}-${EnvironmentName}-DBSubnetGroup
 
   DB:
-    Type: "AWS::RDS::DBInstance" # !GetAtt DB.Endpoint.Address, !GetAtt DB.Endpoint.Address
+    Type: "AWS::RDS::DBInstance"
     Properties:
       BackupRetentionPeriod: 1 # turn on automated backups and store it for a day
       PreferredBackupWindow: "22:30-23:30" #UTC timezone
