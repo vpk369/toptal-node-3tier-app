@@ -5,7 +5,7 @@ Parameters:
   AllocatedStorage:
     Description: The amount of storage (in gigabytes) to be initially allocated for the database instance.
     Type: String
-    Default: 10
+    Default: 5
 
   SecurityGroupStackName:
     Description: Name of the Security Groups stack. This is used in exporting SG values from that stack.
@@ -174,7 +174,7 @@ Resources:
   DB:
     Type: "AWS::RDS::DBInstance" # !GetAtt DB.Endpoint.Address, !GetAtt DB.Endpoint.Address
     Properties:
-      BackupRetentionPeriod: 1 # trun on automated backups and store it for a day
+      BackupRetentionPeriod: 1 # turn on automated backups and store it for a day
       PreferredBackupWindow: "22:30-23:30" #UTC timezone
       PreferredMaintenanceWindow: "mon:23:30-tue:00:30" #UTC timezone
       AllocatedStorage: !Ref AllocatedStorage
@@ -374,14 +374,14 @@ Resources:
       # When state goes from alarm to ok, resolves an incident in PagerDuty
       OKActions:
       - !Ref DBPagerDutySNSTopic
-      AlarmDescription: Storage under 10GB
+      AlarmDescription: Storage under 2GB #normally 10
       AlarmName: !Sub ${ProductName}-${EnvironmentName}-Database-LowStorageAlarm
       MetricName: FreeStorageSpace
       Namespace: AWS/RDS
       Statistic: Average
       EvaluationPeriods: 3
       Period: 900
-      Threshold: 10000000000
+      Threshold: 2000000000
       ComparisonOperator: LessThanOrEqualToThreshold
       Dimensions:
       - Name: DBInstanceIdentifier
