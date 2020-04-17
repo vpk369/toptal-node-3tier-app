@@ -69,6 +69,16 @@ Parameters:
     Type: String
     Default: "5.7.26"
 
+  MasterUsername:
+    Description: Master username for the DB
+    Type: String
+    Default: "Admin"
+
+  UserPassword:
+    Description: user Password for the DB
+    Type: String
+    NoEcho: "True"
+
   RDSServiceRole:
     Description: ARN of the RDS service role so as to publish logs to cloud watch
     Type: String
@@ -78,6 +88,14 @@ Parameters:
     Description: DB Name for RDS MySQLDB.
     Type: String
     Default: "ToptalProdDB"
+
+  lambdaName:
+    Description: Name of the Lambda function to insert database secrets
+    Type: String
+    AllowedValues: 
+      - ProvisionDatabaseSecrets
+      - ProvisionApplicationSecrets
+    Default: 'ProvisionDatabaseSecrets'
 
   SharedInfraStackName:
     Description: Name of the Shared-Infra stack. This is used in exporting SNS topic ARN.
@@ -143,23 +161,6 @@ Parameters:
   #         - SharedInfraStackName
 
 Resources:
-  # This is a Secret resource with a randomly generated password in its SecretString JSON.
-  # This should have been manually done for security reasons as the username is exposed
-  ToptalDBSecrets:
-    Type: 'AWS::SecretsManager::Secret'
-    Properties:
-      Name: !Ref DBSecretsName
-      Description: "This secret has a dynamically generated secret password."
-      GenerateSecretString:
-        SecretStringTemplate: '{"DB_USER": "Admin"}'
-        GenerateStringKey: "DB_PASSWORD"
-        PasswordLength: 15
-        ExcludeCharacters: '"@/\'
-      Tags:
-        -
-          Key: CreatedBy
-          Value: vpk369@gmail.com
-
   DBSubnetGroup:
     Type: "AWS::RDS::DBSubnetGroup"
     Properties:
@@ -171,7 +172,7 @@ Resources:
           Value: !Sub ${ProductName}-${EnvironmentName}-DBSubnetGroup
 
   DB:
-    Type: "AWS::RDS::DBInstance"
+    Type: "AWS::RDS::DBInstance" # !GetAtt DB.Endpoint.Address, !GetAtt DB.Endpoint.Address
     Properties:
       BackupRetentionPeriod: 1 # trun on automated backups and store it for a day
       PreferredBackupWindow: "22:30-23:30" #UTC timezone
@@ -186,8 +187,8 @@ Resources:
         - error
       Engine: !Ref Engine
       EngineVersion: !Ref EngineVersion
-      MasterUsername: !Sub '{{resolve:secretsmanager:${DBSecretsName}:SecretString:DB_USER}}'
-      MasterUserPassword: !Sub '{{resolve:secretsmanager:${DBSecretsName}:SecretString:DB_PASSWORD}}'
+      MasterUsername: !Ref MasterUsername
+      MasterUserPassword: !Ref UserPassword
       PubliclyAccessible: 'false'
       LicenseModel: "general-public-license"
       DBInstanceClass: !Ref DBInstanceClass
@@ -217,6 +218,100 @@ Resources:
           - 
             Key: CreatedBy
             Value: !Sub ${CreatedByTag}
+
+#custom resource lambda to add secrets into Secrets Manager!!!!!!
+
+  DBSecretsLambda:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Code:
+        ZipFile: >
+          var response = require('cfn-response');
+          var AWS = require('aws-sdk');
+          var secretsmanager = new AWS.SecretsManager();
+          var rds = new AWS.RDS();
+          exports.handler = (event, context, callback) => {
+            var dbUser = event.ResourceProperties.DBuser;
+            console.log("DB USER NAME IS : " +dbUser);
+            var dbPassword = event.ResourceProperties.DBpassword;
+            console.log("DB PASSWORD IS : " +dbPassword);
+            var dbhost = event.ResourceProperties.DBendpoint;
+            var dbname = event.ResourceProperties.DBName;
+            var secretsName = event.ResourceProperties.SecretsNameRDS;
+            var serviceRoleRDS = event.ResourceProperties.ServiceRoleRDS;
+            console.log("RDS SERVICE ROLE IS : " +serviceRoleRDS);
+            var dbClusterIdentifier = event.ResourceProperties.DBclusterIdentifier;
+            console.log("DB CLUSTER IDENTIFIER IS : " +dbClusterIdentifier);
+            secrets(dbUser,dbPassword,dbhost,dbname,secretsName,serviceRoleRDS,dbClusterIdentifier);
+            function secrets(dbUser,dbPassword,dbhost,dbname,secretsName,serviceRoleRDS,dbClusterIdentifier) {
+              const new_secret = {
+                'DATABASE_USERNAME': dbUser,
+                'DATABASE_PASSWORD': dbPassword,
+                'DATABASE_HOST': dbhost,
+                'DATABASE_NAME': dbname
+              };
+              var params = {
+                Name: secretsName, 
+                SecretString: JSON.stringify(new_secret),
+              };
+              secretsmanager.createSecret(params, function(err, data) {
+                if (err) console.log(err, err.stack); 
+                else     console.log(data);           
+              });  
+              addServiceRole(serviceRoleRDS,dbClusterIdentifier);
+            }   
+            function addServiceRole(serviceRoleRDS,dbClusterIdentifier) {
+              var params = {
+                DBClusterIdentifier: dbClusterIdentifier,
+                RoleArn: serviceRoleRDS
+              };
+              rds.addRoleToDBCluster(params, function(err, data) {
+                if (err) console.log(err, err.stack); 
+                else     console.log(data);           
+              });
+            }       
+            var responseData = {'passwordcheck': 'Password Valid!'};
+            response.send(event, context, response.SUCCESS, responseData);
+          };
+      FunctionName: !Join [ "-", [ !Ref ProductName, !Ref EnvironmentName, !Ref lambdaName ] ]
+      Description: Lambda function for storing DB cred to Secrets manager
+      Handler: index.handler
+      MemorySize: 128
+      Role: 
+        Fn::ImportValue:
+          !Sub "${SharedInfraStackName}:LambdaExecutionRole" 
+      Runtime: nodejs12.x
+      Timeout: 300
+      Tags:
+      - 
+        Key: Business / Service Owner
+        Value: CSE
+      -
+        Key: Purpose
+        Value: DBSecrets
+      -
+        Key: ProductID
+        Value: !Ref ProductName
+      -
+        Key: Environment
+        Value: !Sub ${EnvironmentName}
+      -
+        Key: Name
+        Value: !Join [ "-", [ !Ref ProductName, !Ref EnvironmentName, !Ref lambdaName ] ]
+
+  CustomResourceLambda:
+    Type: "Custom::Lambda"
+    DependsOn: DBSecretsLambda
+    Version: "1.0"
+    Properties:
+      ServiceToken: !GetAtt DBSecretsLambda.Arn
+      DBuser: !Ref MasterUsername
+      DBpassword: !Ref UserPassword
+      DBendpoint: !GetAtt DB.Endpoint.Address
+      DBName: !Ref DatabaseName
+      SecretsNameRDS: !Ref DBSecretsName
+      ServiceRoleRDS: !Ref RDSServiceRole
+      DBclusterIdentifier: !Ref DbClusterName
 
   DBPagerDutySNSTopic:
     Type: AWS::SNS::Topic
