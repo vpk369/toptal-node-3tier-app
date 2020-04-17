@@ -35,11 +35,6 @@ Parameters:
       - PROD
     Default: 'PROD'
 
-  DbClusterName:
-    Description: Name of the database cluster.
-    Type: String
-    Default: Toptal-PROD-DBcluster
-
   DbInstanceName:
     Description: Name of the database instance.
     Type: String
@@ -119,7 +114,7 @@ Parameters:
   DBSecretsName:
     Description: Name of the Secret in which DB creds are stored.
     Type: String
-    Default: "PROD/Toptal/DB"
+    Default: "PROD/Toptal/DBCred"
 
 Resources:
   DBSubnetGroup:
@@ -193,16 +188,13 @@ Resources:
             var dbUser = event.ResourceProperties.DBuser;
             console.log("DB USER NAME IS : " +dbUser);
             var dbPassword = event.ResourceProperties.DBpassword;
-            console.log("DB PASSWORD IS : " +dbPassword);
+            // console.log("DB PASSWORD IS : " +dbPassword);
             var dbhost = event.ResourceProperties.DBendpoint;
             var dbname = event.ResourceProperties.DBName;
+            console.log("DB Host IS : " + dbhost);
             var secretsName = event.ResourceProperties.SecretsNameRDS;
-            var serviceRoleRDS = event.ResourceProperties.ServiceRoleRDS;
-            console.log("RDS SERVICE ROLE IS : " +serviceRoleRDS);
-            var dbClusterIdentifier = event.ResourceProperties.DBclusterIdentifier;
-            console.log("DB CLUSTER IDENTIFIER IS : " +dbClusterIdentifier);
-            secrets(dbUser,dbPassword,dbhost,dbname,secretsName,serviceRoleRDS,dbClusterIdentifier);
-            function secrets(dbUser,dbPassword,dbhost,dbname,secretsName,serviceRoleRDS,dbClusterIdentifier) {
+            secrets(dbUser,dbPassword,dbhost,dbname,secretsName);
+            function secrets(dbUser,dbPassword,dbhost,dbname,secretsName) {
               const new_secret = {
                 'DATABASE_USERNAME': dbUser,
                 'DATABASE_PASSWORD': dbPassword,
@@ -216,19 +208,8 @@ Resources:
               secretsmanager.createSecret(params, function(err, data) {
                 if (err) console.log(err, err.stack); 
                 else     console.log(data);           
-              });  
-              addServiceRole(serviceRoleRDS,dbClusterIdentifier);
-            }   
-            function addServiceRole(serviceRoleRDS,dbClusterIdentifier) {
-              var params = {
-                DBClusterIdentifier: dbClusterIdentifier,
-                RoleArn: serviceRoleRDS
-              };
-              rds.addRoleToDBCluster(params, function(err, data) {
-                if (err) console.log(err, err.stack); 
-                else     console.log(data);           
               });
-            }       
+            }         
             var responseData = {'passwordcheck': 'Password Valid!'};
             response.send(event, context, response.SUCCESS, responseData);
           };
@@ -269,8 +250,6 @@ Resources:
       DBendpoint: !GetAtt DB.Endpoint.Address
       DBName: !Ref DatabaseName
       SecretsNameRDS: !Ref DBSecretsName
-      ServiceRoleRDS: !Ref RDSServiceRole
-      DBclusterIdentifier: !Ref DbClusterName
 
   DBPagerDutySNSTopic:
     Type: AWS::SNS::Topic
