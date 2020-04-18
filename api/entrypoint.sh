@@ -47,7 +47,7 @@ echo "PORT=80" >> .env
 chmod +r .env
 
 # removing temp files
-rm -f $secrets_file $secrets_cms_file $secrets_eb_file $vars_file
+rm -f $secrets_file $secrets_db_file $secrets_eb_file $vars_file
 
 #start node
 node ./bin/www

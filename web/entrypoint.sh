@@ -2,7 +2,7 @@
 
 AWS_REGION='us-east-1'
 SECRETS_EB='PROD/Toptal/ApiEB'
-SECRETS_DB='PROD/Toptal/DBCred'
+SECRETS_WEB='PROD/Toptal/WebEB'
 EB_CONFIG_DIR='.elasticbeanstalk'
 EB_EXT_DIR='.ebextensions'
 SSH_KEY_NAME='toptal-screening'
@@ -10,9 +10,9 @@ VPN_SG='Toptal-PROD-VPN'
 
 home_dir='/opt/config'
 vars_file="$home_dir/vars"
-secrets_file="$home_dir/secrets.json"
+
 secrets_eb_file="$home_dir/secrets_eb.json"
-secrets_db_file="$home_dir/secrets_db.json"
+secrete_web_file="$home_dir/secrete_web.json"
 
 if [ ! -d $home_dir ]; then
 	mkdir $home_dir
@@ -22,13 +22,10 @@ aws --output json --region $AWS_REGION \
       secretsmanager get-secret-value --secret-id $SECRETS_EB | jq --raw-output '.SecretString' > $secrets_eb_file
 
 aws --output json --region $AWS_REGION \
-      secretsmanager get-secret-value --secret-id $SECRETS_DB | jq --raw-output '.SecretString' > $secrets_db_file
-
-# merging 2 secrets
-jq -s '.|add' $secrets_eb_file $secrets_db_file > $secrets_file
+      secretsmanager get-secret-value --secret-id $SECRETS_WEB | jq --raw-output '.SecretString' > $secrete_web_file
 
 # putting secrets as bash variables
-jq -r 'to_entries|map(.key+"="+.value|tostring)|.[]' $secrets_file > $vars_file
+jq -r 'to_entries|map(.key+"="+.value|tostring)|.[]' $secrets_web_file > $vars_file
 chmod +x $vars_file
 
 . $vars_file
@@ -41,13 +38,19 @@ sed -i "s#%AWS_REGION%#${AWS_REGION}#g" $EB_CONFIG_DIR/config.yml
 
 sed -i "s#%SECURITY_GROUP%#${VPN_SG}#g" $EB_EXT_DIR/02-launch.config
 
-#create env varas for this app
-echo "DB=$CONN_STRING" > .env
+# putting secrets as bash variables
+jq -r 'to_entries|map(.key+"="+.value|tostring)|.[]' $secrets_eb_file > $vars_file
+chmod +x $vars_file
+
+. $vars_file
+
+#note: EB_APPLICATION_URL is overridden with api eb app url as same var name exists in both of web and api secrets
+echo "API_HOST=$EB_APPLICATION_URL" > .env
 echo "PORT=80" >> .env
 chmod +r .env
 
 # removing temp files
-rm -f $secrets_file $secrets_cms_file $secrets_eb_file $vars_file
+rm -f  $secrets_db_file $secrets_eb_file $vars_file
 
 #start node
 node ./bin/www
