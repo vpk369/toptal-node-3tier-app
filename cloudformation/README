@@ -14,3 +14,17 @@ fix: replace all hardcoded values to use variables
 
 #reference for postgresql DB Setup: 
 https://console.aws.amazon.com/cloudformation/designer/home?templateURL=https://s3.amazonaws.com/aws-database-blog/artifacts/aws-aurora-cloudformation-samples/cftemplates/Aurora-Postgres-DB-Cluster.yml&region=us-east-1
+
+
+gitlab variables for CI/CD (api & web)
+--------------
+ 
+AWS_ACCESS_KEY_ID
+ 
+AWS_BASE_REGION
+ 
+AWS_SECRET_ACCESS_KEY
+
+ECR_REPO_URL
+
+
