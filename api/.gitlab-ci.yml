@@ -29,14 +29,14 @@ docker-deploy-image:
     - docker:dind
   script:
     - aws --region $AWS_BASE_REGION ecr get-login --no-include-email
-    - docker build -t $REPO_URL .
+    - docker build -t $ECR_API_REPO_URL .
     - aws ecr get-login --no-include-email
-    - docker push $REPO_URL
+    - docker push $ECR_API_REPO_URL
 
 aws-deploy:
   image: 'python:latest'
   stage: aws-deploy
   before_script:
-    - 'pip install awsebcli --upgrade' # (6)
+    - 'pip install awsebcli --upgrade'
   script:
-    - eb deploy TtoptalAssignment-env
+    - eb deploy %EB_APP_NAME%
