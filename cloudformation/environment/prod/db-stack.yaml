@@ -114,7 +114,7 @@ Parameters:
   DBSecretsName:
     Description: Name of the Secret in which DB creds are stored.
     Type: String
-    Default: "PROD/Toptal/DBCred"
+    Default: "PROD/Toptal/DBCredentials"
 
 Resources:
   DBSubnetGroup:
@@ -199,7 +199,8 @@ Resources:
                 'DATABASE_USERNAME': dbUser,
                 'DATABASE_PASSWORD': dbPassword,
                 'DATABASE_HOST': dbhost,
-                'DATABASE_NAME': dbname
+                'DATABASE_NAME': dbname,
+                'CONN_STRING': 'postgres://' + dbUser + ':' + dbPassword + '@' + dbhost + '/' + dbname
               };
               var params = {
                 Name: secretsName, 
