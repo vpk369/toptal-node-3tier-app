@@ -1,8 +1,8 @@
-# branch-defaults:
-#   master:
-#     environment: TtoptalAssignment-env
+branch-defaults:
+  default:
+    environment: PROD
 # environment-defaults:
-#   TtoptalAssignment-env:
+#   PROD:
 #     branch: null
 #     repository: null
 global:
@@ -15,5 +15,5 @@ global:
   platform_name: null
   platform_version: null
   profile: null
-  sc: git
+  sc: null
   workspace_type: Application

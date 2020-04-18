@@ -2,9 +2,9 @@
 FROM node:12.7.0-alpine
 
 # Set the working directory to /app
-WORKDIR '/app'
+WORKDIR '/var/www/html'
 
-# Copy package.json to the working directory
+# Copy package.json to the working directory -- not needed as per 21
 COPY package.json .
 
 COPY entrypoint.sh /usr/local/sbin/
