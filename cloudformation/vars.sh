@@ -1,4 +1,4 @@
-#!/bin/bash
+
 
 EnvironmentName=''
 ProductName=''
@@ -11,7 +11,7 @@ AvailabilityZone=''
 AvailabilityZoneB=''
 
 AWSProfile=''
-AWSDefaultRegion='us-east-1'
+AWS_REGION='us-east-1'
 
-# DB Values
-UserPassword=''
+# DB Values (Mandatory field to be set)
+UserPassword='H3110W0r1d!'
