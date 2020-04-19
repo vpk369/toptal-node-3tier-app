@@ -65,7 +65,7 @@ Resources:
             Action: s3:*
             Effect: Allow
             Principal:
-              AWS: !Sub arn:aws:iam::127311923021:root #aws-account-id of virginia region 
+              AWS: arn:aws:iam::127311923021:root #aws-account-id of virginia region 
             Resource:
               Fn::Join:
                 - ''
@@ -76,7 +76,7 @@ Resources:
             Action: s3:PutObject
             Effect: "Allow"
             Principal:
-              AWS: !Sub arn:aws:iam::127311923021:root #aws-account-id of virginia region
+              AWS: arn:aws:iam::127311923021:root #aws-account-id of virginia region
             Resource:
               Fn::Join:
                 - ''

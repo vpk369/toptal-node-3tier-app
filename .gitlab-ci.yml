@@ -49,6 +49,6 @@ aws-deploy:
     elif [ "$DEPLOY_TIER" == "Both" ]; then
       cd web;
       eb deploy %EB_WEB_APP_NAME%
-      cd api;
+      cd ../api;
       eb deploy %EB_API_APP_NAME%
     fi
