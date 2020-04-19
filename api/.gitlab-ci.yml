@@ -39,4 +39,16 @@ aws-deploy:
   before_script:
     - 'pip install awsebcli --upgrade'
   script:
-    - eb deploy %EB_APP_NAME%
+    - >
+    if [ "$Deploy" == "Web" ]; then
+      cd web;
+      eb deploy %EB_APP_NAME%
+    elif [ "$Deploy" == "Api" ]; then
+      cd api;
+      eb deploy %EB_APP_NAME%
+    elif [ [ "$Deploy" == "Both" ]; then]
+      cd web;
+      eb deploy %EB_APP_NAME%
+      cd api;
+      eb deploy %EB_APP_NAME%
+    fi

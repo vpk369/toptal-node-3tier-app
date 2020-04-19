@@ -1,8 +1,8 @@
 ##run with caution - only when you are redepoying entire stacks
 ```
-aws secretsmanager delete-secret --secret-id PROD/Toptal/ApiEB --force-delete-without-recovery --profile ToptalAdmin 
-aws secretsmanager delete-secret --secret-id PROD/Toptal/WebEB --force-delete-without-recovery --profile ToptalAdmin
-aws secretsmanager delete-secret --secret-id PROD/Toptal/DBCred --force-delete-without-recovery --profile ToptalAdmin
+#aws secretsmanager delete-secret --secret-id PROD/Toptal/ApiEB --force-delete-without-recovery --profile ToptalAdmin 
+#aws secretsmanager delete-secret --secret-id PROD/Toptal/WebEB --force-delete-without-recovery --profile ToptalAdmin
+#aws secretsmanager delete-secret --secret-id PROD/Toptal/DBCred --force-delete-without-recovery --profile ToptalAdmin
 
 ##for windows
 proj-root$ find . -type f -name "*.sh" | xargs dos2unix $1

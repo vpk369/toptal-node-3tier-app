@@ -487,126 +487,52 @@ Resources:
         SecretsNameApp: !Ref SecretsName
         AppRole: !Ref AppRole
 
-    # ToptalPagerDutySNSTopic:
-    #   Type: AWS::SNS::Topic
-    #   Properties:
-    #     DisplayName: PagerDuty Integration for Toptal
-    #     Subscription:
-    #     - Endpoint: "vpk369@gmail.com"
-    #       Protocol: "email"
-    # EndpointVerification:
-    #   Type: AWS::Lambda::Function
-    #   Properties:
-    #     Code:
-    #       ZipFile: >
-    #         const response = require('./cfn-response');
-    #         const AWS = require('aws-sdk');
-    #         const elasticbeanstalk = new AWS.ElasticBeanstalk();
-    #         const http = require('http');
-    #         exports.handler = (event, context, callback) => {
-    #           function testBeanstalkHealth(hostURL) {
-    #             const options = {
-    #               port: 80,
-    #               hostname: hostURL,
-    #               path: 'graphql??operationName=ArticleQuery&variables=%7B%22postName%22%3A%22%D8%A7%D9%84%D8%AA%D8%AC%D8%A7%D8%B1%D8%A9-%D8%A7%D9%84%D8%A5%D9%84%D9%83%D8%AA%D8%B1%D9%88%D9%86%D9%8A%D8%A9-%D9%85%D9%86-%D8%A8%D9%86%D8%A7%D8%A1-%D8%A7%D9%84%D8%AB%D9%82%D8%A9-%D8%A5%D9%84%22%2C%22options%22%3A%7B%22postType%22%3A%22%22%2C%22preview%22%3Afalse%7D%7D&extensions=%7B%7D',
-    #               headers: {
-    #                 'Content-Type': 'application/json',
-    #                 'wp-site': 'moana'
-    #               }
-    #             };
-
-    #             return new Promise((resolve, reject) => {
-    #               let response = ''
-    #               http.get(options, res => {
-    #                 if (res.statusCode != 200) {
-    #                   reject('Returned non 200 status code.');
-    #                 }
-    #                 res.on('data', chunk => response += chunk);
-    #                 res.on('end', () => {
-    #                   let json = JSON.parse(response);
-
-    #                   if (json.errors && json.errors.length > 0) {
-    #                     reject(json.errors.reduce((a, b) => a + b + '\n', ''));
-    #                   } else {
-    #                     resolve();
-    #                   }
-    #                 });
-    #               });
-    #             });
-    #           }
-
-    #           const elasticBeanstalkURL = os.environ.elasticBeanstalkURL;
-    #           try {
-    #             await testBeanstalkHealth(elasticBeanstalkURL);
-    #           } catch (message) {
-    #             const pagerDutySNSTopic = os.environ.pagerDutySNSTopic
-    #             const sns = new AWS.SNS();
-    #             const parameters = {
-    #               Message: `Unable to fetch results from Toptal Elastic Beanstalk ${elasticBeanstalkURL}. Message was ${message}`,
-    #               Subject: `Unable to fetch results from Toptal Elastic Beanstalk ${elasticBeanstalkURL}`,
-    #               TopicArn: pagerDutySNSTopic
-    #             };
-    #             sns.publish(parameters)
-    #           }
-    #         };
-    #     Environment:
-    #       Variables:
-    #         elasticBeanstalkURL: !GetAtt Environment.EndpointURL
-    #         pagerDutySNSTopic: !Ref ToptalPagerDutySNSTopic
-    #     FunctionName: !Sub ${ProductName}-${envName}-EndpointVerification
-    #     Description: Lambda function for Toptal endpoint verification
-    #     Handler: index.handler
-    #     MemorySize: 128
-    #     Role:
-    #       Fn::ImportValue:
-    #         !Sub "${SharedInfraStackName}:LambdaExecutionRole"
-    #     Runtime: nodejs12.x
-    #     Timeout: 300
-    #     Tags:
-    #       - 
-    #         Key: Business / Service Owner
-    #         Value: CSE
-    #       -
-    #         Key: Purpose
-    #         Value: WebSecrets
-    #       -
-    #         Key: ProductID
-    #         Value: !Ref ProductName
-    #       -
-    #         Key: Environment
-    #         Value: !Sub ${envName}
-    #       - 
-    #         Key: Name
-    #         Value: !Sub ${ProductName}-${envName}-EndpointVerification
-    #       -
-    #         Key: CreatedBy
-    #         Value: vpk369@gmail.com
-
-    # ScheduleEvery10Minutes:
-    #   Type: AWS::Events::Rule
-    #   Properties:
-    #     Description: "Run endpoint verification every 10 minutes"
-    #     ScheduleExpression: "rate(10 minutes)"
-    #     State: "ENABLED"
-    #     Targets:
-    #       -
-    #         Arn:
-    #           Fn::GetAtt:
-    #             - "EndpointVerification"
-    #             - "Arn"
-    #         Id: !Ref EndpointVerification
-
-    # PermissionForEventsToInvokeLambda:
-    #   Type: AWS::Lambda::Permission
-    #   Properties:
-    #     FunctionName:
-    #       Ref: EndpointVerification
-    #     Action: "lambda:InvokeFunction"
-    #     Principal: "events.amazonaws.com"
-    #     SourceArn:
-    #       Fn::GetAtt:
-    #         - "ScheduleEvery10Minutes"
-    #         - "Arn"
+    CDN:
+      Type: 'AWS::CloudFront::Distribution'
+      Properties:
+        DistributionConfig:
+          Origins:
+          - DomainName: !GetAtt Environment.EndpointURL
+            Id: !Join [ "-", [ !Ref ProductName, !Ref envName, 'Origin' ] ]
+            CustomOriginConfig:
+              HTTPPort: '80'
+              HTTPSPort: '443'
+              OriginProtocolPolicy: http-only
+          Enabled: 'true'
+          Comment: Somecomment
+          DefaultRootObject: index.html
+          Logging:
+            IncludeCookies: 'true'
+            Bucket: mylogs.s3.amazonaws.com
+            Prefix: myprefix
+          Aliases:
+          - mysite.example.com
+          - "*.yoursite.example.com"
+          DefaultCacheBehavior:
+            TargetOriginId: !Join [ "-", [ !Ref ProductName, !Ref envName, 'Origin' ] ]
+            SmoothStreaming: 'false'
+            ForwardedValues:
+              QueryString: 'false'
+              Cookies:
+                Forward: all
+            TrustedSigners:
+            - 1234567890EX
+            - 1234567891EX
+            ViewerProtocolPolicy: allow-all
+          CustomErrorResponses:
+          - ErrorCode: '404'
+            ResponsePagePath: "/error-pages/404.html"
+            ResponseCode: '200'
+            ErrorCachingMinTTL: '30'
+          PriceClass: PriceClass_200
+          Restrictions:
+            GeoRestriction:
+              RestrictionType: whitelist
+              Locations:
+              - AQ
+              - CV
+          ViewerCertificate:
+            CloudFrontDefaultCertificate: 'true'
 
 Outputs:
   EndPoint:
