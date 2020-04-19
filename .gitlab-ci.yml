@@ -29,9 +29,9 @@ docker-deploy-image:
     - docker:dind
   script:
     - aws --region $AWS_BASE_REGION ecr get-login --no-include-email
-    - docker build -t $ECR_API_REPO_URL .
-    - aws ecr get-login --no-include-email
-    - docker push $ECR_API_REPO_URL
+    - docker build -t $ECR_REPO_URL .
+    # - aws ecr get-login --no-include-email
+    - docker push $ECR_REPO_URL
 
 aws-deploy:
   image: 'python:latest'
@@ -40,15 +40,15 @@ aws-deploy:
     - 'pip install awsebcli --upgrade'
   script:
     - >
-    if [ "$Deploy" == "Web" ]; then
+    if [ "$DEPLOY_TIER" == "Web" ]; then
       cd web;
-      eb deploy %EB_APP_NAME%
-    elif [ "$Deploy" == "Api" ]; then
+      eb deploy %EB_WEB_APP_NAME%
+    elif [ "$DEPLOY_TIER" == "Api" ]; then
       cd api;
-      eb deploy %EB_APP_NAME%
-    elif [ [ "$Deploy" == "Both" ]; then]
+      eb deploy %EB_API_APP_NAME%
+    elif [ "$DEPLOY_TIER" == "Both" ]; then
       cd web;
-      eb deploy %EB_APP_NAME%
+      eb deploy %EB_WEB_APP_NAME%
       cd api;
-      eb deploy %EB_APP_NAME%
+      eb deploy %EB_API_APP_NAME%
     fi

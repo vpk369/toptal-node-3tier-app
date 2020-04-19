@@ -499,38 +499,38 @@ Resources:
               HTTPSPort: '443'
               OriginProtocolPolicy: http-only
           Enabled: 'true'
-          Comment: Somecomment
+          Comment: !Join [ ' ', [ 'CDN for ', !Ref ProductName, !Ref envName ] ]
           DefaultRootObject: index.html
           Logging:
             IncludeCookies: 'true'
             Bucket: mylogs.s3.amazonaws.com
-            Prefix: myprefix
-          Aliases:
-          - mysite.example.com
-          - "*.yoursite.example.com"
-          DefaultCacheBehavior:
-            TargetOriginId: !Join [ "-", [ !Ref ProductName, !Ref envName, 'Origin' ] ]
-            SmoothStreaming: 'false'
-            ForwardedValues:
-              QueryString: 'false'
-              Cookies:
-                Forward: all
-            TrustedSigners:
-            - 1234567890EX
-            - 1234567891EX
-            ViewerProtocolPolicy: allow-all
+            Prefix: cdn
+          # Aliases:
+          # - mysite.example.com
+          # - "*.yoursite.example.com"
+          # DefaultCacheBehavior:
+          #   TargetOriginId: !Join [ "-", [ !Ref ProductName, !Ref envName, 'Origin' ] ]
+          #   SmoothStreaming: 'false'
+          #   ForwardedValues:
+          #     QueryString: 'false'
+          #     Cookies:
+          #       Forward: all
+          #   TrustedSigners:
+          #   - 1234567890EX
+          #   - 1234567891EX
+          #   ViewerProtocolPolicy: allow-all
           CustomErrorResponses:
           - ErrorCode: '404'
             ResponsePagePath: "/error-pages/404.html"
             ResponseCode: '200'
             ErrorCachingMinTTL: '30'
-          PriceClass: PriceClass_200
-          Restrictions:
-            GeoRestriction:
-              RestrictionType: whitelist
-              Locations:
-              - AQ
-              - CV
+          # PriceClass: PriceClass_200
+          # Restrictions:
+          #   GeoRestriction:
+          #     RestrictionType: whitelist
+          #     Locations:
+          #     - AQ
+          #     - CV
           ViewerCertificate:
             CloudFrontDefaultCertificate: 'true'
 
