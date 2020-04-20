@@ -145,7 +145,8 @@ Resources:
       GroupDescription: Allow ports to web server-LB
       VpcId: !Ref vpcID
       SecurityGroupIngress:
-        - CidrIp: !Ref vpnIp
+        # - CidrIp: !Ref vpnIp
+        - CidrIp: 0.0.0.0/0  #this should be publicly open for CDN
           FromPort: 80
           IpProtocol: tcp
           ToPort: 80

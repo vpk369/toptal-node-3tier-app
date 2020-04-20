@@ -510,13 +510,11 @@ Resources:
           # - "*.yoursite.example.com"
           DefaultCacheBehavior:
             TargetOriginId: !Join [ "-", [ !Ref ProductName, !Ref envName, 'Origin' ] ]
-            SmoothStreaming: 'false'
+            # SmoothStreaming: 'false'
             ForwardedValues:
-              QueryString: 'false'
+              QueryString: false
               Cookies:
                 Forward: all
-            TrustedSigners:
-            - !Sub ${AWS::AccountId}
             ViewerProtocolPolicy: allow-all
           CustomErrorResponses:
           - ErrorCode: '404'
@@ -528,8 +526,8 @@ Resources:
           #   GeoRestriction:
           #     RestrictionType: whitelist
           #     Locations:
-          #     - AQ
-          #     - CV
+          #     - IN
+          #     - US
           ViewerCertificate:
             CloudFrontDefaultCertificate: 'true'
 
@@ -544,6 +542,10 @@ Outputs:
     
   EbEnvironmentName:
     Value: !Ref Environment
+
+  CDNEndPoint:
+    Description: Toptal Web CDN EndPoint url
+    Value: !GetAtt CDN.DomainName
 
   # ToptalPagerDutySnsTopic:
   #   Description: PagerDuty SNS topic ARN
