@@ -434,9 +434,9 @@ Resources:
               secrets(secretsName,ebappname,appRole);
               function secrets(secretsName,ebappname,appRole) {
                 const new_secret = {
-                  'EB_APPLICATION_NAME': ebappname,
-                  'APP_ROLE': appRole,
-                  'EB_APPLICATION_URL': ebappurl
+                  'EB_WEB_APP_NAME': ebappname,
+                  'WEB_APP_ROLE': appRole,
+                  'EB_WEB_APP_URL': ebappurl
                 };
                 var params = {
                   Name: secretsName, 
@@ -487,49 +487,49 @@ Resources:
         SecretsNameApp: !Ref SecretsName
         AppRole: !Ref AppRole
 
-    CDN:
-      Type: 'AWS::CloudFront::Distribution'
-      Properties:
-        DistributionConfig:
-          Origins:
-          - DomainName: !GetAtt Environment.EndpointURL
-            Id: !Join [ "-", [ !Ref ProductName, !Ref envName, 'Origin' ] ]
-            CustomOriginConfig:
-              HTTPPort: '80'
-              HTTPSPort: '443'
-              OriginProtocolPolicy: http-only
-          Enabled: 'true'
-          Comment: !Join [ ' ', [ 'CDN for ', !Ref ProductName, !Ref envName ] ]
-          # DefaultRootObject: index.html
-          Logging:
-            IncludeCookies: 'true'
-            Bucket: !Join [ '', [ !Ref AlbLogsBucket, '.s3.amazonaws.com' ] ]
-            Prefix: cdn-logs
-          # Aliases:
-          # - mysite.example.com
-          # - "*.yoursite.example.com"
-          DefaultCacheBehavior:
-            TargetOriginId: !Join [ "-", [ !Ref ProductName, !Ref envName, 'Origin' ] ]
-            # SmoothStreaming: 'false'
-            ForwardedValues:
-              QueryString: false
-              Cookies:
-                Forward: all
-            ViewerProtocolPolicy: allow-all
-          CustomErrorResponses:
-          - ErrorCode: '404'
-            ResponsePagePath: "/error-pages/404.html"
-            ResponseCode: '200'
-            ErrorCachingMinTTL: '30'
-          # PriceClass: PriceClass_200
-          # Restrictions:
-          #   GeoRestriction:
-          #     RestrictionType: whitelist
-          #     Locations:
-          #     - IN
-          #     - US
-          ViewerCertificate:
-            CloudFrontDefaultCertificate: 'true'
+    # CDN:
+    #   Type: 'AWS::CloudFront::Distribution'
+    #   Properties:
+    #     DistributionConfig:
+    #       Origins:
+    #       - DomainName: !GetAtt Environment.EndpointURL
+    #         Id: !Join [ "-", [ !Ref ProductName, !Ref envName, 'Origin' ] ]
+    #         CustomOriginConfig:
+    #           HTTPPort: '80'
+    #           HTTPSPort: '443'
+    #           OriginProtocolPolicy: http-only
+    #       Enabled: 'true'
+    #       Comment: !Join [ ' ', [ 'CDN for ', !Ref ProductName, !Ref envName ] ]
+    #       # DefaultRootObject: index.html
+    #       Logging:
+    #         IncludeCookies: 'true'
+    #         Bucket: !Join [ '', [ !Ref AlbLogsBucket, '.s3.amazonaws.com' ] ]
+    #         Prefix: cdn-logs
+    #       # Aliases:
+    #       # - mysite.example.com
+    #       # - "*.yoursite.example.com"
+    #       DefaultCacheBehavior:
+    #         TargetOriginId: !Join [ "-", [ !Ref ProductName, !Ref envName, 'Origin' ] ]
+    #         # SmoothStreaming: 'false'
+    #         ForwardedValues:
+    #           QueryString: false
+    #           Cookies:
+    #             Forward: all
+    #         ViewerProtocolPolicy: allow-all
+    #       CustomErrorResponses:
+    #       - ErrorCode: '404'
+    #         ResponsePagePath: "/error-pages/404.html"
+    #         ResponseCode: '200'
+    #         ErrorCachingMinTTL: '30'
+    #       # PriceClass: PriceClass_200
+    #       # Restrictions:
+    #       #   GeoRestriction:
+    #       #     RestrictionType: whitelist
+    #       #     Locations:
+    #       #     - IN
+    #       #     - US
+    #       ViewerCertificate:
+    #         CloudFrontDefaultCertificate: 'true'
 
 Outputs:
   EndPoint:
@@ -543,9 +543,9 @@ Outputs:
   EbEnvironmentName:
     Value: !Ref Environment
 
-  CDNEndPoint:
-    Description: Toptal Web CDN EndPoint url
-    Value: !GetAtt CDN.DomainName
+  # CDNEndPoint:
+  #   Description: Toptal Web CDN EndPoint url
+  #   Value: !GetAtt CDN.DomainName
 
   # ToptalPagerDutySnsTopic:
   #   Description: PagerDuty SNS topic ARN

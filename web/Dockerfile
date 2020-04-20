@@ -1,5 +1,5 @@
 # Use an official Node runtime as a parent image
-FROM node:12.7.0-alpine
+FROM nikolaik/python-nodejs
 
 # Set the working directory to /app
 WORKDIR '/var/www/html'
@@ -21,7 +21,7 @@ RUN yarn
 COPY . .
 
 # Make port 3000 available to the world outside this container
-EXPOSE 3000
+EXPOSE 80
 
 # Run index.js when the container launches
 CMD ["/usr/local/sbin/entrypoint.sh"]

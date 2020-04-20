@@ -1,12 +1,12 @@
 {
   "AWSEBDockerrunVersion": "1",
   "Image": {
-    "Name": "894541307925.dkr.ecr.us-east-1.amazonaws.com/toptal-poc-api",
+    "Name": "894541307925.dkr.ecr.us-east-1.amazonaws.com/toptal-web:latest",
     "Update": "true"
   },
   "Ports": [
     {
-      "ContainerPort": "3000"
+      "ContainerPort": "80"
     }
   ]
 }

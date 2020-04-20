@@ -31,8 +31,7 @@ chmod +x $vars_file
 . $vars_file
 
 #update .ebextensions/config.yml file
-sed -i "s#%EB_APP_NAME%#${EB_APPLICATION_NAME}#g" $EB_CONFIG_DIR/config.yml
-sed -i "s#%EB_WEB_APP_NAME%#${EB_APPLICATION_NAME}#g" .gitlab-ci.yml
+sed -i "s#%EB_WEB_APP_NAME%#${EB_WEB_APP_NAME}#g" $EB_CONFIG_DIR/config.yml
 sed -i "s#%SSH_KEY_NAME%#${SSH_KEY_NAME}#g" $EB_CONFIG_DIR/config.yml
 sed -i "s#%AWS_REGION%#${AWS_REGION}#g" $EB_CONFIG_DIR/config.yml
 
@@ -44,8 +43,7 @@ chmod +x $vars_file
 
 . $vars_file
 
-#note: EB_APPLICATION_URL is overridden with api eb app url as same var name exists in both of web and api secrets
-echo "API_HOST=$EB_APPLICATION_URL" > .env
+echo "API_HOST=$EB_API_APP_URL" > .env
 echo "PORT=80" >> .env
 chmod +r .env
 

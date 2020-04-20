@@ -434,9 +434,9 @@ Resources:
               secrets(secretsName,ebappname,appRole);
               function secrets(secretsName,ebappname,appRole) {
                 const new_secret = {
-                  'EB_APPLICATION_NAME': ebappname,
-                  'APP_ROLE': appRole,
-                  'EB_APPLICATION_URL': ebappurl
+                  'EB_API_APP_NAME': ebappname,
+                  'API_APP_ROLE': appRole,
+                  'EB_API_APP_URL': ebappurl
                 };
                 var params = {
                   Name: secretsName, 

@@ -6,10 +6,10 @@ branch-defaults:
 #     branch: null
 #     repository: null
 global:
-  application_name: %EB_APP_NAME%
-  default_ec2_keyname: %SSH_KEY_NAME%
+  application_name: '%EB_WEB_APP_NAME%'
+  default_ec2_keyname: '%SSH_KEY_NAME%'
   default_platform: arn:aws:elasticbeanstalk:us-east-1::platform/Docker running on 64bit Amazon Linux 2
-  default_region: %AWS_REGION%
+  default_region: '%AWS_REGION%'
   include_git_submodules: true
   instance_profile: null
   platform_name: null
