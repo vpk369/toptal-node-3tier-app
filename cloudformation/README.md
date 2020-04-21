@@ -1,44 +1,44 @@
 ##run with caution - only when you are redepoying entire stacks
 ```
-#aws secretsmanager delete-secret --secret-id PROD/Toptal/ApiEB --force-delete-without-recovery --profile ToptalAdmin 
-#aws secretsmanager delete-secret --secret-id PROD/Toptal/WebEB --force-delete-without-recovery --profile ToptalAdmin
-#aws secretsmanager delete-secret --secret-id PROD/Toptal/DBCred --force-delete-without-recovery --profile ToptalAdmin
+aws secretsmanager delete-secret --secret-id PROD/Toptal/ApiEB --force-delete-without-recovery --profile ToptalAdmin 
+aws secretsmanager delete-secret --secret-id PROD/Toptal/WebEB --force-delete-without-recovery --profile ToptalAdmin
+aws secretsmanager delete-secret --secret-id PROD/Toptal/DBCred --force-delete-without-recovery --profile ToptalAdmin
 
 ##for windows
 proj-root$ find . -type f -name "*.sh" | xargs dos2unix $1
 ```
 --------------
 --------------
-Stack run order:
-Network
-Shared
-Security Groups
-DB
-API
-Web
+Stack run order: in init.sh
 
 ------------------
-fix: replace all hardcoded values to use variables
+fix: 
      ssh is open for eb instances -- done?
-     setup cloud front cdn
+     replace all hardcoded values to use variables - done
+     setup cloud front cdn -- done but commented
      save dburl and eburl to secrets or else generate in deploy script and save in both apps -done 
 
 #reference for postgresql DB Setup: 
 https://console.aws.amazon.com/cloudformation/designer/home?templateURL=https://s3.amazonaws.com/aws-database-blog/artifacts/aws-aurora-cloudformation-samples/cftemplates/Aurora-Postgres-DB-Cluster.yml&region=us-east-1
 
+#reference for waf
+https://docs.aws.amazon.com/solutions/latest/aws-waf-security-automations/template.html
+
 
 gitlab variables for CI/CD (api & web)
 --------------
  
-AWS_ACCESS_KEY_ID
- 
-AWS_BASE_REGION
- 
-AWS_SECRET_ACCESS_KEY
+AWS_ACCESS_KEY_ID        AKIA5ARWREAKYU2VUWXG
+AWS_SECRET_ACCESS_KEY    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
+AWS_BASE_REGION           us-east-1
+DEPLOY_TIER              Web
+ECR_API_REPO_URL             894541307925.dkr.ecr.us-east-1.amazonaws.com/toptal-api
+ECR_WEB_REPO_URL             894541307925.dkr.ecr.us-east-1.amazonaws.com/toptal-web
 
-ECR_API_REPO_URL
 
-ECR_WEB_REPO_URL
+
+
+DEPLOY_TIER allowed valuse are: Web  / Api  / Both
 
 
 
