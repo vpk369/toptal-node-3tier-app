@@ -289,11 +289,11 @@ Resources:
 
             - Namespace: aws:elasticbeanstalk:environment:process:default
               OptionName: HealthCheckPath
-              Value: /
+              Value: /api/status
 
             - Namespace: aws:elasticbeanstalk:application
               OptionName: Application Healthcheck URL
-              Value: /
+              Value: /api/status
 
             - Namespace: aws:elasticbeanstalk:environment:process:default
               OptionName: MatcherHTTPCode
