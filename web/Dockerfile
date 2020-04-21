@@ -2,7 +2,7 @@
 FROM nikolaik/python-nodejs
 
 # Set the working directory to /app
-WORKDIR '/var/www/html'
+WORKDIR '/var/opt'
 
 # Copy package.json to the working directory -- not needed as per 21
 COPY package.json .
