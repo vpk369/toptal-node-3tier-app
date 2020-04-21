@@ -426,15 +426,17 @@ Resources:
             exports.handler = (event, context, callback) => {
               console.log("REQUEST RECEIVED:\n" + JSON.stringify(event));
               var ebappname = event.ResourceProperties.EBAppName;
+              var ebenvname = event.ResourceProperties.EBEnvName;
               var ebappurl = event.ResourceProperties.EBAppUrl;
               console.log("EB APP NAME IS : " +ebappname);
               var secretsName = event.ResourceProperties.SecretsNameApp;
               console.log("SECRETS NAME FOR APP IS : " +secretsName);
               var appRole = event.ResourceProperties.AppRole;
-              secrets(secretsName,ebappname,appRole);
-              function secrets(secretsName,ebappname,appRole) {
+              secrets(secretsName,ebappname,ebenvname,appRole);
+              function secrets(secretsName,ebappname,ebenvname,appRole) {
                 const new_secret = {
                   'EB_WEB_APP_NAME': ebappname,
+                  'EB_WEB_ENV_NAME': ebappname,
                   'WEB_APP_ROLE': appRole,
                   'EB_WEB_APP_URL': ebappurl
                 };
@@ -483,6 +485,7 @@ Resources:
       Properties:
         ServiceToken: !GetAtt CustomLambda.Arn
         EBAppName: !Ref EBAppName
+        EBEnvName: !Ref Environment
         EBAppUrl: !GetAtt Environment.EndpointURL
         SecretsNameApp: !Ref SecretsName
         AppRole: !Ref AppRole

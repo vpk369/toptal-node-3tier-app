@@ -79,7 +79,7 @@ aws-deploy:
       EB_CONFIG_DIR='.elasticbeanstalk'
       EB_EXT_DIR='.ebextensions'
       SSH_KEY_NAME='toptal-screening'
-      VPN_SG='Toptal-PROD-VPN'
+      VPN_SG='sg-0449d1f0a8b2d16dc'
 
       SECRETS_API_EB='PROD/Toptal/ApiEB'
       secrets_api_eb_file='./secrets_api_eb.json'

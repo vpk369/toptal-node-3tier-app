@@ -28,17 +28,13 @@ https://docs.aws.amazon.com/solutions/latest/aws-waf-security-automations/templa
 gitlab variables for CI/CD (api & web)
 --------------
  
-AWS_ACCESS_KEY_ID        AKIA5ARWREAKYU2VUWXG
-AWS_SECRET_ACCESS_KEY    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
+AWS_ACCESS_KEY_ID        xxxxxxxxxxxx
+AWS_SECRET_ACCESS_KEY    xxxxxxxx
 AWS_BASE_REGION           us-east-1
-DEPLOY_TIER              Web
+DEPLOY_TIER              allowed valuse are: Web / Api / Both
 ECR_API_REPO_URL             894541307925.dkr.ecr.us-east-1.amazonaws.com/toptal-api
 ECR_WEB_REPO_URL             894541307925.dkr.ecr.us-east-1.amazonaws.com/toptal-web
 
-
-
-
-DEPLOY_TIER allowed valuse are: Web  / Api  / Both
 
 
 

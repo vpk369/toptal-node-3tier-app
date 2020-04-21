@@ -23,5 +23,5 @@ COPY . .
 # Make port 3000 available to the world outside this container
 EXPOSE 80
 
-# Run index.js when the container launches
+# Run shell script and start node
 CMD ["/usr/local/sbin/entrypoint.sh"]

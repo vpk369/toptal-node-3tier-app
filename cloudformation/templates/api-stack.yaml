@@ -305,7 +305,7 @@ Resources:
         ApplicationName: !Ref EBAppName 
         CNAMEPrefix: !Ref EbEnvironmentURL 
         TemplateName: !Ref ConfigurationTemplate
-        EnvironmentName: !Join [ "-", [ !Ref ProductName, !Ref envName, apiserver] ] 
+        EnvironmentName: !Join [ "-", [ !Ref ProductName, !Ref envName, ApiServer] ] 
         Tags:
           - 
             Key: Business / Service Owner
@@ -426,15 +426,17 @@ Resources:
             exports.handler = (event, context, callback) => {
               console.log("REQUEST RECEIVED:\n" + JSON.stringify(event));
               var ebappname = event.ResourceProperties.EBAppName;
+              var ebenvname = event.ResourceProperties.EBEnvName;
               var ebappurl = event.ResourceProperties.EBAppUrl;
               console.log("EB APP NAME IS : " +ebappname);
               var secretsName = event.ResourceProperties.SecretsNameApp;
               console.log("SECRETS NAME FOR APP IS : " +secretsName);
               var appRole = event.ResourceProperties.AppRole;
-              secrets(secretsName,ebappname,appRole);
-              function secrets(secretsName,ebappname,appRole) {
+              secrets(secretsName,ebappname,ebenvname,appRole);
+              function secrets(secretsName,ebappname,ebenvname,appRole) {
                 const new_secret = {
                   'EB_API_APP_NAME': ebappname,
+                  'EB_API_ENV_NAME': ebenvname,
                   'API_APP_ROLE': appRole,
                   'EB_API_APP_URL': ebappurl
                 };
@@ -483,6 +485,7 @@ Resources:
       Properties:
         ServiceToken: !GetAtt CustomLambda.Arn
         EBAppName: !Ref EBAppName
+        EBEnvName: !Ref Environment
         EBAppUrl: !GetAtt Environment.EndpointURL
         SecretsNameApp: !Ref SecretsName
         AppRole: !Ref AppRole
