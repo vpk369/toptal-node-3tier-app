@@ -10,6 +10,11 @@ Parameters:
     Type: String
     Default: 'vpc-09fd98ff1e314078d'
 
+  VpcCIDR: 
+      Description: Please enter the IP range (CIDR notation) for this VPC
+      Type: String
+      Default: 172.24.32.0/22
+
   NetworkStackName:
     Description: Enter VPC ID
     Type: String
@@ -76,6 +81,26 @@ Resources:
           IpProtocol: icmp  
           ToPort: -1
           Description: VPN Gateway
+        - CidrIp: !Ref VpcCIDR
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+          Description: Within VPC
+        - CidrIp: !Ref VpcCIDR
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+          Description: Within VPC
+        - CidrIp: !Ref VpcCIDR
+          FromPort: 443
+          IpProtocol: tcp
+          ToPort: 443
+          Description: Within VPC
+        - CidrIp: !Ref VpcCIDR
+          FromPort: -1
+          IpProtocol: icmp
+          ToPort: -1
+          Description: Within VPC
       Tags:
         - Key: Name
           Value: !Sub ${productName}-${environmentName}-VPN
@@ -118,6 +143,21 @@ Resources:
           IpProtocol: icmp  
           ToPort: -1
           Description: VPN Gateway
+        - CidrIp: !Ref VpcCIDR
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+          Description: Within VPC
+        - CidrIp: !Ref VpcCIDR
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+          Description: Within VPC
+        - CidrIp: !Ref VpcCIDR
+          FromPort: -1
+          IpProtocol: icmp
+          ToPort: -1
+          Description: Within VPC
         # - IpProtocol: tcp
         #   FromPort: 22
         #   ToPort: 22
@@ -156,6 +196,16 @@ Resources:
           IpProtocol: tcp
           ToPort: 443
           Description: VPN Gateway
+        - CidrIp: !Ref VpcCIDR
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+          Description: Within VPC
+        - CidrIp: !Ref VpcCIDR
+          FromPort: 443
+          IpProtocol: tcp
+          ToPort: 443
+          Description: Within VPC
       Tags:
         - Key: Name
           Value: !Sub ${productName}-${environmentName}-Web-Server-LB
@@ -198,6 +248,21 @@ Resources:
           IpProtocol: icmp  
           ToPort: -1
           Description: VPN Gateway
+        - CidrIp: !Ref VpcCIDR
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+          Description: Within VPC
+        - CidrIp: !Ref VpcCIDR
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+          Description: Within VPC
+        - CidrIp: !Ref VpcCIDR
+          FromPort: -1
+          IpProtocol: icmp
+          ToPort: -1
+          Description: Within VPC
         # - IpProtocol: tcp
         #   FromPort: 22
         #   ToPort: 22
@@ -246,6 +311,16 @@ Resources:
           IpProtocol: tcp
           ToPort: 443
           Description: VPN Gateway
+        - CidrIp: !Ref VpcCIDR
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+          Description: Within VPC
+        - CidrIp: !Ref VpcCIDR
+          FromPort: 443
+          IpProtocol: tcp
+          ToPort: 443
+          Description: Within VPC
       Tags:
         - Key: Name
           Value: !Sub ${productName}-${environmentName}-Api-Server-LB
@@ -273,6 +348,11 @@ Resources:
           ToPort: 5432
           SourceSecurityGroupId: !GetAtt APIServerSG.GroupId
           Description: Data from API Server
+        - CidrIp: !Ref VpcCIDR
+          FromPort: 5432
+          IpProtocol: tcp
+          ToPort: 5432
+          Description: Within VPC -- caution
       Tags:
         - Key: Name
           Value: !Sub ${productName}-${environmentName}-RDS

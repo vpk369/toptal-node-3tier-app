@@ -200,7 +200,7 @@ Resources:
                 'DATABASE_PASSWORD': dbPassword,
                 'DATABASE_HOST': dbhost,
                 'DATABASE_NAME': dbname,
-                'CONN_STRING': 'postgres://' + dbUser + ':' + dbPassword + '@' + dbhost + '/' + dbname
+                'CONN_STRING': 'postgres://' + dbUser + ':' + dbPassword + '@' + dbhost + ':5432/' + dbname
               };
               var params = {
                 Name: secretsName, 

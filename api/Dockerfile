@@ -2,17 +2,18 @@
 FROM nikolaik/python-nodejs
 
 # Set the working directory to /app
-WORKDIR '/var/opt'
+WORKDIR '/app'
 
-# Copy package.json to the working directory -- not needed as per 21
-COPY package.json .
+# Copy package.json to the working directory
+COPY ./package.json ./
 
-COPY entrypoint.sh /usr/local/sbin/
+COPY ./entrypoint.sh /usr/local/bin/
+
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 RUN apt-get update && \
-    apt-get install -y gawk jq python python-pip && \
-    pip install awscli && \
-    chmod +x /usr/local/sbin/entrypoint.sh
+    apt-get install -y jq && \
+    npm install
 
 # Install any needed packages specified in package.json
 RUN yarn
@@ -21,7 +22,7 @@ RUN yarn
 COPY . .
 
 # Make port 3000 available to the world outside this container
-EXPOSE 3000
+EXPOSE 80
 
 # Run shell script and start node
-CMD ["/usr/local/sbin/entrypoint.sh"]
+CMD ["sh","/usr/local/bin/entrypoint.sh"]

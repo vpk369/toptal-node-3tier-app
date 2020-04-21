@@ -18,7 +18,7 @@ aws cloudformation deploy --template-file templates/db-stack.yaml --stack-name T
 
 aws cloudformation deploy --template-file templates/api-stack.yaml --stack-name Toptal-PROD-Api --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM #give permission to create role
 
-# aws cloudformation deploy --template-file templates/web-stack.yaml --stack-name Toptal-PROD-Web --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM #give permission to create role
+aws cloudformation deploy --template-file templates/web-stack.yaml --stack-name Toptal-PROD-Web --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM #give permission to create role
 
 echo -e "\n\n\nHere are the details of resources:"
 aws cloudformation list-exports --query "Exports[*].{name:Name,value:Value}" --profile ToptalAdmin --region $AWS_REGION --output text
