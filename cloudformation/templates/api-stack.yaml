@@ -466,7 +466,7 @@ Resources:
                   'EB_API_APP_NAME': ebappname,
                   'EB_API_ENV_NAME': ebenvname,
                   'API_APP_ROLE': appRole,
-                  'EB_API_APP_URL': ebappurl
+                  'EB_API_APP_URL': 'http://' + ebappurl
                 };
                 var params = {
                   Name: secretsName, 
