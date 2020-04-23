@@ -464,7 +464,7 @@ Resources:
               function secrets(secretsName,ebappname,ebenvname,appRole) {
                 const new_secret = {
                   'EB_WEB_APP_NAME': ebappname,
-                  'EB_WEB_ENV_NAME': ebappname,
+                  'EB_WEB_ENV_NAME': ebenvname,
                   'WEB_APP_ROLE': appRole,
                   'EB_WEB_APP_URL': ebappurl
                 };

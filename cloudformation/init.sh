@@ -14,9 +14,9 @@ source vars.sh
 
 # aws cloudformation deploy --template-file templates/security-groups.yaml --stack-name Toptal-PROD-SecurityGroups --profile ToptalAdmin --region=$AWS_REGION
 
-aws cloudformation deploy --template-file templates/db-stack.yaml --stack-name Toptal-PROD-DB --profile ToptalAdmin --region=$AWS_REGION --parameter-overrides UserPassword=$UserPassword
+# aws cloudformation deploy --template-file templates/db-stack.yaml --stack-name Toptal-PROD-DB --profile ToptalAdmin --region=$AWS_REGION --parameter-overrides UserPassword=$UserPassword
 
-aws cloudformation deploy --template-file templates/api-stack.yaml --stack-name Toptal-PROD-Api --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM #give permission to create role
+#aws cloudformation deploy --template-file templates/api-stack.yaml --stack-name Toptal-PROD-Api --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM #give permission to create role
 
 aws cloudformation deploy --template-file templates/web-stack.yaml --stack-name Toptal-PROD-Web --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM #give permission to create role
 
