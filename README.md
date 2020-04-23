@@ -1,4 +1,4 @@
-# Sample 3tier app
+# Toptal Screening - Sample 3-tier app
 This repo contains code for a Node.js multi-tier application.
 
 The application overview is as follows
@@ -8,5 +8,102 @@ web <=> api <=> db
 ```
 
 The folders `web` and `api` respectively describe how to install and run each app.
+
+
+## Architecture diagram:
+
+<img src="cloudformation/img/Toptal_AWS_Architecture.png"
+     alt="Architecture diagram"
+     style="float: left; margin-right: 10px;" />
+
+
+## Network diagram:
+
+<img src="cloudformation/img/Toptal_AWS_Network.png"
+     alt="Network diagram"
+     style="float: left; margin-right: 10px;" />
+
+## Configuration steps
+
+Here are the prerequisites for infrastructure creation and provisiniong of aws resources:
+- AWS account
+- GitLab account
+- awscli tool
+
+After finishing <a href="checklist.md">checklist of items</a>, run the command on your local machine and hit enter
+```
+aws configure --profile ToptalAdmin
+```
+and then enter the following details:
+```
+
+AWS Access Key ID [None]:         <enter access key provided in shared file and hit enter>
+AWS Secret Access Key [None]:      <enter secret key provided in shared file and hit enter>
+Default region name [None]:        us-east-1
+Default output format [None]:      <just hit enter>
+
+```
+
+For every aws command you run, make sure you add the option ```--profile ToptalAdmin``` so that the cli will consider those keys
+
+
+Infrastructure setup will be launched from local machine by running below commands  
+```
+git clone https://git.toptal.com/screening/pradeep-kumar-vijayagiri
+cd toptal-prod/cloudformation/
+bash init.sh
+```
+when you run above commands, CloudFormation stacks will be created at https://console.aws.amazon.com/cloudformation/home?region=us-east-1
+
+Once the stack is created, you can connect to the instances in private subnet through SSM
+
+Note: When you are redepoying stacks, run below commands to delete secrets:
+```
+aws secretsmanager delete-secret --secret-id PROD/Toptal/ApiEB --force-delete-without-recovery --profile ToptalAdmin 
+
+aws secretsmanager delete-secret --secret-id PROD/Toptal/WebEB --force-delete-without-recovery --profile ToptalAdmin
+
+aws secretsmanager delete-secret --secret-id PROD/Toptal/DBCred --force-delete-without-recovery --profile ToptalAdmin
+```
+
+To convert files format from Windows to Unix:
+```
+find . -type f -name "*.sh" | xargs dos2unix $1
+```
+
+Useful commands:
+``` 
+aws elasticbeanstalk list-available-solution-stacks --profile ToptalAdmin | grep -i node
+Output:  64bit Amazon Linux 2018.03 v4.14.1 running Node.js
+```
+
+------------------
+fix: 
+     ssh is open for eb instances -- done?
+ 
+ 
+
+Reference for postgresql DB Setup: 
+```
+https://console.aws.amazon.com/cloudformation/designer/home?templateURL=https://s3.amazonaws.com/aws-database-blog/artifacts/aws-aurora-cloudformation-samples/cftemplates/Aurora-Postgres-DB-Cluster.yml&region=us-east-1
+```
+Reference for setting up WAF rules
+```
+https://docs.aws.amazon.com/solutions/latest/aws-waf-security-automations/template.html
+```
+
+Gitlab variables for CI/CD (api & web)
+ ```
+AWS_ACCESS_KEY_ID        xxxxxxxxxxxx
+AWS_SECRET_ACCESS_KEY    xxxxxxxx
+AWS_BASE_REGION           us-east-1
+DEPLOY_TIER              allowed valuse are: Web / Api / Both
+ECR_API_REPO_URL             894541307925.dkr.ecr.us-east-1.amazonaws.com/toptal-api
+ECR_WEB_REPO_URL             894541307925.dkr.ecr.us-east-1.amazonaws.com/toptal-web
+```
+<img src="cloudformation/img/gitlab-settings-png.png"
+     alt="Architecture diagram"
+     style="float: left; margin-right: 10px;" />
+
 
 
