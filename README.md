@@ -25,10 +25,13 @@ The folders `web` and `api` respectively describe how to install and run each ap
 
 ## Configuration steps
 
-Here are the prerequisites for infrastructure creation and provisiniong of aws resources:
+In this application, we are using AWS Cloudformation, Bash Script, AWSCLI tools for building infrastructure (Infrastructure-as-Code) and Gitlab, AWSEBCLI as CI/CD, Version control tool.
+
+So, here are the prerequisites for infrastructure creation and provisioning of aws resources:
 - AWS account
 - GitLab account
-- awscli tool
+- awscli, awsebcli tools
+
 
 After finishing <a href="checklist.md">checklist of items</a>, run the command on your local machine and hit enter
 ```
@@ -66,22 +69,33 @@ aws secretsmanager delete-secret --secret-id PROD/Toptal/WebEB --force-delete-wi
 aws secretsmanager delete-secret --secret-id PROD/Toptal/DBCred --force-delete-without-recovery --profile ToptalAdmin
 ```
 
-To convert files format from Windows to Unix:
+Ensure that there is no S3 bucket named 'toptal-website-virginia' in virginia region. If you think that is needed and being used by other projects, launch the stack with different S3 bucket name in <a href="cloudformation/vars.sh">cloudformation/vvars.sh</a> file
+
+Create 2 ECR repos for hosting Api and Web docker container images by running below commands:
+ ```
+aws ecr create-repository --repository-name toptal-api --profile ToptalAdmin
+aws ecr create-repository --repository-name toptal-web --profile ToptalAdmin
+ ```
+
+Setup Gitlab variables for CI/CD (api & web)
+ ```
+AWS_ACCESS_KEY_ID        xxxxxxxxxxxx
+AWS_SECRET_ACCESS_KEY    xxxxxxxx
+AWS_BASE_REGION          us-east-1
+DEPLOY_TIER              allowed valuse are: Web / Api / Both
+ECR_API_REPO_URL         894541307925.dkr.ecr.us-east-1.amazonaws.com/toptal-api
+ECR_WEB_REPO_URL         894541307925.dkr.ecr.us-east-1.amazonaws.com/toptal-web
 ```
-find . -type f -name "*.sh" | xargs dos2unix $1
-```
+<img src="cloudformation/img/gitlab-settings-png.png"
+     alt="Architecture diagram"
+     style="float: left; margin-right: 10px;" />
+
 
 Useful commands:
 ``` 
 aws elasticbeanstalk list-available-solution-stacks --profile ToptalAdmin | grep -i node
 Output:  64bit Amazon Linux 2018.03 v4.14.1 running Node.js
 ```
-
-------------------
-fix: 
-     ssh is open for eb instances -- done?
- 
- 
 
 Reference for postgresql DB Setup: 
 ```
@@ -92,18 +106,9 @@ Reference for setting up WAF rules
 https://docs.aws.amazon.com/solutions/latest/aws-waf-security-automations/template.html
 ```
 
-Gitlab variables for CI/CD (api & web)
- ```
-AWS_ACCESS_KEY_ID        xxxxxxxxxxxx
-AWS_SECRET_ACCESS_KEY    xxxxxxxx
-AWS_BASE_REGION           us-east-1
-DEPLOY_TIER              allowed valuse are: Web / Api / Both
-ECR_API_REPO_URL             894541307925.dkr.ecr.us-east-1.amazonaws.com/toptal-api
-ECR_WEB_REPO_URL             894541307925.dkr.ecr.us-east-1.amazonaws.com/toptal-web
+To convert files format from Windows to Unix:
 ```
-<img src="cloudformation/img/gitlab-settings-png.png"
-     alt="Architecture diagram"
-     style="float: left; margin-right: 10px;" />
-
+find . -type f -name "*.sh" | xargs dos2unix $1
+```
 
 

@@ -7,6 +7,7 @@ Checklist of items for kicking off the project in Virginia location of AWS accou
 - Create keypair with name 'toptal-screening' and save keys on secure location like Google Drive with private access
 - Create a GitLab repo for Web Application code to deploy
 
+
 On local machine:
 -----------------
 
@@ -17,5 +18,9 @@ On local machine:
 ```
 aws --version
 ```
-- Determine values for cloudformation/vars.sh and save it 
+- Determine values for <a href="cloudformation/vars.sh">cloudformation/vvars.sh</a> and save it 
+- Ensure that there is no S3 bucket named 'toptal-website-virginia' in virginia region. If you think that is needed and being used by other projects, launch the stack with different S3 bucket name in <a href="cloudformation/vars.sh">cloudformation/vvars.sh</a> file
+
+
 - Generate ssh key pair by following instructions on https://help.github.com/en/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent
+
