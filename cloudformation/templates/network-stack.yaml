@@ -253,3 +253,15 @@ Outputs:
         Export:
           Name: !Join [ ":", [ !Ref "AWS::StackName", PrivateSubnet2 ] ]
         Value: !Ref PrivateSubnet2
+
+    PrivateSubnets:
+        Description: Private subnets to be used for EB instances
+        Export:
+          Name: !Join [ ":", [ !Ref "AWS::StackName", PrivateSubnets ] ]
+        Value: !Join [ ",", [ !Ref PrivateSubnet1, !Ref PrivateSubnet2 ] ]
+
+    PublicSubnets:
+        Description: Public subnets to be used for EB LB
+        Export:
+          Name: !Join [ ",", [ !Ref "AWS::StackName", PublicSubnets ] ]
+        Value: !Join [ ",", [ !Ref PublicSubnet1, !Ref PublicSubnet2 ] ]
