@@ -1,16 +1,12 @@
-image: node:latest
+# image: node:latest
 
 stages:
   ## - test
   - docker-build-push
   - aws-deploy
 
-variables:
-  ALL_STAGES_VARS_FILE: ./all_stages_vars.txt
-
 cache:
   paths:
-      - node_modules/
       - api/node_modules/
       - web/node_modules/
 
@@ -28,86 +24,28 @@ docker-build-push:
     - 'pip install awscli'
   script: >
 
-      replace_web_placeholders() {
-        cd web;
-        # replace placeholders in files
-        sed -i "s#%EB_WEB_APP_NAME%#${EB_WEB_APP_NAME}#g" $EB_CONFIG_DIR/config.yml
-        sed -i "s#%SSH_KEY_NAME%#${SSH_KEY_NAME}#g" $EB_CONFIG_DIR/config.yml
-        sed -i "s#%AWS_REGION%#${AWS_REGION}#g" $EB_CONFIG_DIR/config.yml
-        sed -i "s#%SECURITY_GROUP%#${VPN_SG}#g" $EB_EXT_DIR/02-launch.config
-
-        sed -i "s#%EB_API_APP_URL%#${EB_API_APP_URL}#g; s#%PORT%#${PORT}#g" ./entrypoint.sh
-      }
-
-      replace_api_placeholders() {
-        cd api;
-        # replace placeholders in files
-        sed -i "s#%EB_API_APP_NAME%#${EB_API_APP_NAME}#g" $EB_CONFIG_DIR/config.yml
-        sed -i "s#%SSH_KEY_NAME%#${SSH_KEY_NAME}#g" $EB_CONFIG_DIR/config.yml
-        sed -i "s#%AWS_REGION%#${AWS_REGION}#g" $EB_CONFIG_DIR/config.yml
-        sed -i "s#%SECURITY_GROUP%#${VPN_SG}#g" $EB_EXT_DIR/02-launch.config
-
-        sed -i "s#%CONN_STRING%#${CONN_STRING}#g; s#%PORT%#${PORT}#g" ./entrypoint.sh
-      }
-
-      pull_secrets_and_load_envvars() {
-        EB_CONFIG_DIR='.elasticbeanstalk'
-        EB_EXT_DIR='.ebextensions'
-        SSH_KEY_NAME='toptal-screening'
-        VPN_SG='sg-0449d1f0a8b2d16dc'
-        PORT=80
-
-        SECRETS_API_EB='PROD/Toptal/ApiEB'
-        secrets_api_eb_file='./secrets_api_eb.json'
-        SECRETS_WEB_EB='PROD/Toptal/WebEB'
-        secrets_web_eb_file='./secrets_web_eb.json'
-        SECRETS_DB='PROD/Toptal/DBCred'
-        secrets_db_file="$home_dir/secrets_db.json"
-
-        secrets_file='./secrets.json'
-        vars_file='/tmp/vars'
-
-        aws secretsmanager get-secret-value --secret-id $SECRETS_API_EB --output json --region $AWS_REGION | jq --raw-output '.SecretString' > $secrets_api_eb_file
-        aws secretsmanager get-secret-value --secret-id $SECRETS_WEB_EB --output json --region $AWS_REGION | jq --raw-output '.SecretString' > $secrets_web_eb_file
-        aws secretsmanager get-secret-value --secret-id $SECRETS_DB --output json --region $AWS_REGION     | jq --raw-output '.SecretString' > $secrets_db_file
-
-
-        # merging 3 secrets
-        jq -s ".|add" $secrets_db_file $secrets_api_eb_file $secrets_web_eb_file > $secrets_file
-
-        # putting secrets as bash variables
-        jq -r "to_entries|map(.key+\"=\"+.value|tostring)|.[]?" $secrets_file > $vars_file
-        chmod +x $vars_file
-
-        . $vars_file
-
-        #send vars file to other stages
-        cat $vars_file > $ALL_STAGES_VARS_FILE
-      }
-
-      # Required commands' execution starts from here
-      pull_secrets_and_load_envvars
+      . ./gitlab-variables.sh
 
       if [[ "$DEPLOY_TIER" == "Web" ]]; then
-        replace_web_placeholders
+        cd web
         aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_WEB_REPO_URL
         docker build -t $ECR_WEB_REPO_URL .
         docker push $ECR_WEB_REPO_URL
       elif [[ "$DEPLOY_TIER" == "Api" ]]; then
-        replace_api_placeholders
+        cd api
         aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_API_REPO_URL
         docker build -t $ECR_API_REPO_URL .
         docker push $ECR_API_REPO_URL
       elif [[ "$DEPLOY_TIER" == "Both" ]]; then
-        replace_web_placeholders
+        cd web;
         aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_WEB_REPO_URL
         docker build -t $ECR_WEB_REPO_URL .
         docker push $ECR_WEB_REPO_URL
-        cd ..;
-        replace_api_placeholders
+        cd ../api;
         aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_API_REPO_URL
         docker build -t $ECR_API_REPO_URL .
         docker push $ECR_API_REPO_URL
+        cd ..
       fi
 
 aws-deploy:
@@ -119,20 +57,21 @@ aws-deploy:
   script:
     - |
 
-      source $ALL_STAGES_VARS_FILE
+      . ./gitlab-variables.sh
 
       if [[ "$DEPLOY_TIER" == "Web" ]]; then
+        cd web;
         rm Dockerfile
         eb deploy $EB_WEB_ENV_NAME
       elif [[ "$DEPLOY_TIER" == "Api" ]]; then
+        cd api;
         rm Dockerfile
         eb deploy $EB_API_ENV_NAME
       elif [[ "$DEPLOY_TIER" == "Both" ]]; then
+         cd web;
          rm Dockerfile
          eb deploy $EB_WEB_ENV_NAME
-         cd ..;
+         cd ../api;
          rm Dockerfile
          eb deploy $EB_API_ENV_NAME
       fi
-
-

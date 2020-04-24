@@ -24,8 +24,8 @@ aws cloudformation deploy --template-file templates/db-stack.yaml --stack-name T
 aws cloudformation deploy --template-file templates/api-stack.yaml --stack-name Toptal-PROD-Api --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM \
           --parameter-overrides EBSubnet="$PrivateSubnet1,$PrivateSubnet2" ALBSubnets="$PublicSubnet1,$PublicSubnet2"
 
-# aws cloudformation deploy --template-file templates/web-stack.yaml --stack-name Toptal-PROD-Web --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM \
-          # --parameter-overrides EBSubnet="${PrivateSubnet1},${PrivateSubnet2}"  ALBSubnets="${PublicSubnet1},${PublicSubnet2}"
+aws cloudformation deploy --template-file templates/web-stack.yaml --stack-name Toptal-PROD-Web --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM \
+          --parameter-overrides EBSubnet="${PrivateSubnet1},${PrivateSubnet2}"  ALBSubnets="${PublicSubnet1},${PublicSubnet2}"
 
 ## aws cloudformation deploy --template-file templates/waf-security.yaml --stack-name Toptal-WAF-Security --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM #give permission to create role
 
