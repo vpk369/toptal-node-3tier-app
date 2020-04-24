@@ -54,16 +54,6 @@ Parameters:
     Type: String
     Default: Toptal-PROD-Api-App
 
-  EBSubnet:
-    Description: subnet id (private) for EB instances . This is used for AutoScaling group.
-    Type: String
-    Default: "subnet-xxxx,subnet-xxxx"
-
-  ALBSubnets:
-    Description: subnet ids (public) for EB ALB
-    Type: String
-    Default: "subnet-xxxx,subnet-xxxx"
-
   NetworkStackName:
     Description: Name of the Network stack. This is used in exporting vpc values from that stack.
     Type: String
@@ -233,23 +223,15 @@ Resources:
 
             - Namespace: aws:ec2:vpc
               OptionName: Subnets
-              Value: !Ref EBSubnet
+              Value:
+                  Fn::ImportValue:
+                    !Sub "${NetworkStackName}:PrivateSubnets"
 
             - Namespace: aws:ec2:vpc
               OptionName: ELBSubnets
-              Value: !Ref ALBSubnets
-
-            # - Namespace: aws:ec2:vpc
-            #   OptionName: Subnets
-            #   Value:
-            #     Fn::ImportValue:
-            #       !Join [ ",", [ !Sub "${NetworkStackName}:PrivateSubnet1", !Sub "${NetworkStackName}:PrivateSubnet2" ] ]
-
-            # - Namespace: aws:ec2:vpc
-            #   OptionName: ELBSubnets
-            #   Value:
-            #     Fn::ImportValue:
-            #       !Join [ ",", [ !Sub "${NetworkStackName}:PublicSubnet1", !Sub "${NetworkStackName}:PublicSubnet2" ] ]
+              Value:
+                  Fn::ImportValue:
+                    !Sub "${NetworkStackName}:PublicSubnets"
 
             - Namespace: aws:ec2:vpc
               OptionName: ELBScheme

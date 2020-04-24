@@ -56,7 +56,7 @@ git clone https://git.toptal.com/screening/pradeep-kumar-vijayagiri.git toptal-p
 cd toptal-prod/cloudformation/
 bash init.sh
 ```
-when you run above commands, CloudFormation stacks will be created at https://console.aws.amazon.com/cloudformation/home?region=us-east-1
+when you run above commands, CloudFormation stacks will be created at https://console.aws.amazon.com/cloudformation/home?region=us-east-1 and the required secrets for api and web are created at https://console.aws.amazon.com/secretsmanager/home?region=us-east-1
 
 Once all the stacks are created, you can connect to the instances in private subnet through <a href="https://medium.com/@korniichuk/session-manager-e724eb105eb7">Session Manager</a>
 
