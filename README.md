@@ -52,7 +52,7 @@ For every aws command you run, make sure you add the option ```--profile ToptalA
 
 Infrastructure setup will be launched from local machine by running below commands  
 ```
-git clone https://git.toptal.com/screening/pradeep-kumar-vijayagiri
+git clone https://git.toptal.com/screening/pradeep-kumar-vijayagiri.git toptal-prod
 cd toptal-prod/cloudformation/
 bash init.sh
 ```
@@ -69,7 +69,7 @@ aws secretsmanager delete-secret --secret-id PROD/Toptal/WebEB --force-delete-wi
 aws secretsmanager delete-secret --secret-id PROD/Toptal/DBCred --force-delete-without-recovery --profile ToptalAdmin
 ```
 
-Ensure that there is no S3 bucket named 'toptal-website-virginia' in virginia region. If you think that is needed and being used by other projects, launch the stack with different S3 bucket name in <a href="cloudformation/vars.sh">cloudformation/vvars.sh</a> file
+Ensure that there is no S3 bucket named 'toptal-website-virginia' in virginia region. If you think that is needed and being used by other projects, launch the stack with different S3 bucket name in <a href="cloudformation/vars.sh">cloudformation/vars.sh</a> file
 
 Create 2 ECR repos for hosting Api and Web docker container images by running below commands:
  ```
@@ -89,6 +89,17 @@ ECR_WEB_REPO_URL         894541307925.dkr.ecr.us-east-1.amazonaws.com/toptal-web
 <img src="cloudformation/img/gitlab-settings-png.png"
      alt="Architecture diagram"
      style="float: left; margin-right: 10px;" />
+
+For scaling instances in API/Web tiers set the autoscale min and max counts in the following commands:
+```
+# For scaling API instances
+aws cloudformation deploy --template-file templates/api-stack.yaml --stack-name Toptal-PROD-Api --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM --parameter-overrides AutoScalingMinInstanceCount=1 AutoScalingMaxInstanceCount=2
+
+# For scaling WEB instances
+aws cloudformation deploy --template-file templates/web-stack.yaml --stack-name Toptal-PROD-Web --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM --parameter-overrides AutoScalingMinInstanceCount=1 AutoScalingMaxInstanceCount=2e
+
+```
+
 
 
 Useful commands:
