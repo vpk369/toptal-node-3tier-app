@@ -3,7 +3,6 @@
 EB_CONFIG_DIR='.elasticbeanstalk'
 EB_EXT_DIR='.ebextensions'
 SSH_KEY_NAME='toptal-screening'
-VPN_SG='sg-0bc35f5c249ad2a66'
 PORT=80
 
 SECRETS_API_EB='PROD/Toptal/ApiEB'
@@ -48,6 +47,8 @@ jq -s ".|add" $secrets_db_file $secrets_api_eb_file $secrets_web_eb_file > $secr
 jq -r "to_entries|map(.key+\"=\"+.value|tostring)|.[]?" $secrets_file > $vars_file
 chmod +x $vars_file
 . $vars_file
+
+VPN_SG=$(aws cloudformation list-exports --query 'Exports[?Name==`Toptal-PROD-SecurityGroups:VPNSgId`].Value' --region $AWS_REGION --output text)
 
 cd web
 replace_web_placeholders
