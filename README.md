@@ -124,4 +124,9 @@ To convert files format from Windows to Unix:
 find . -type f -name "*.sh" | xargs dos2unix $1
 ```
 
+Unit tests reference:
+```
+https://buddy.works/guides/how-automate-nodejs-unit-tests-with-mocha-chai
+```
+
 
