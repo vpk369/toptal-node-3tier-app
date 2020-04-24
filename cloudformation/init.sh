@@ -14,7 +14,7 @@ aws cloudformation deploy --template-file templates/network-stack.yaml --stack-n
 
 aws cloudformation deploy --template-file templates/shared-infra.yaml --stack-name Toptal-PROD-Shared-Infra --profile ToptalAdmin --region=$AWS_REGION --parameter-overrides S3BucketName=$S3BucketName
 
-aws cloudformation deploy --template-file templates/security-groups.yaml --stack-name Toptal-PROD-SecurityGroups --profile ToptalAdmin --region=$AWS_REGION
+aws cloudformation deploy --template-file templates/security-groups.yaml --stack-name Toptal-PROD-SecurityGroups --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_NAMED_IAM
 
 aws cloudformation deploy --template-file templates/db-stack.yaml --stack-name Toptal-PROD-DB --profile ToptalAdmin --region=$AWS_REGION --parameter-overrides UserPassword=$UserPassword
 
