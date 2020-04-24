@@ -476,3 +476,9 @@ Outputs:
       Name: !Join [ ":", [ !Ref "AWS::StackName", RdsSgId ] ]
     Value: !GetAtt RdsSG.GroupId
 
+  VPNSgID:
+    Description: Security group ID if VPN IP(s)
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", VPNSgId ] ]
+    Value: !GetAtt VPNSG.GroupId
+
