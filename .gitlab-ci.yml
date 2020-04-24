@@ -26,6 +26,9 @@ docker-build-push:
 
       . ./gitlab-variables.sh
 
+      sed -i "s#%ECR_WEB_REPO_URL%#${ECR_WEB_REPO_URL}#g" ./web/Dockerrun.aws.json
+      sed -i "s#%ECR_API_REPO_URL%#${ECR_API_REPO_URL}#g" ./api/Dockerrun.aws.json
+
       if [[ "$DEPLOY_TIER" == "Web" ]]; then
         cd web
         aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_WEB_REPO_URL
@@ -59,19 +62,17 @@ aws-deploy:
 
       . ./gitlab-variables.sh
 
+      rm ./web/Dockerfile ./api/Dockerfile
+
       if [[ "$DEPLOY_TIER" == "Web" ]]; then
         cd web;
-        rm Dockerfile
         eb deploy $EB_WEB_ENV_NAME
       elif [[ "$DEPLOY_TIER" == "Api" ]]; then
         cd api;
-        rm Dockerfile
         eb deploy $EB_API_ENV_NAME
       elif [[ "$DEPLOY_TIER" == "Both" ]]; then
          cd web;
-         rm Dockerfile
          eb deploy $EB_WEB_ENV_NAME
          cd ../api;
-         rm Dockerfile
          eb deploy $EB_API_ENV_NAME
       fi
