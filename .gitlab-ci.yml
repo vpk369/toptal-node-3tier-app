@@ -5,10 +5,14 @@ stages:
   - docker-build-push
   - aws-deploy
 
-# cache:
-#   paths:
-#       - api/node_modules/
-#       - web/node_modules/
+variables:
+  ALL_STAGES_VARS_FILE: ./all_stages_vars.txt
+
+cache:
+  paths:
+      - node_modules/
+      - api/node_modules/
+      - web/node_modules/
 
 # testing:
 #   stage: test
@@ -23,37 +27,6 @@ docker-build-push:
     - 'apk add --no-cache curl jq python py-pip'
     - 'pip install awscli'
   script: >
-
-    if [[ "$DEPLOY_TIER" == "Web" ]]; then
-      cd web
-      aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_WEB_REPO_URL
-      docker build -t $ECR_WEB_REPO_URL .
-      docker push $ECR_WEB_REPO_URL
-    elif [[ "$DEPLOY_TIER" == "Api" ]]; then
-      cd api
-      aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_API_REPO_URL
-      docker build -t $ECR_API_REPO_URL .
-      docker push $ECR_API_REPO_URL
-    elif [[ "$DEPLOY_TIER" == "Both" ]]; then
-      cd web;
-      aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_WEB_REPO_URL
-      docker build -t $ECR_WEB_REPO_URL .
-      docker push $ECR_WEB_REPO_URL
-      cd ../api;
-      aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_API_REPO_URL
-      docker build -t $ECR_API_REPO_URL .
-      docker push $ECR_API_REPO_URL
-      cd ..
-    fi
-
-aws-deploy:
-  stage: aws-deploy
-  image: python:latest
-  before_script:
-    - 'apt-get update && apt-get install -y jq'
-    - 'pip install awscli awsebcli --upgrade'
-  script:
-    - |
 
       replace_web_placeholders() {
         cd web;
@@ -107,22 +80,62 @@ aws-deploy:
         chmod +x $vars_file
 
         . $vars_file
+
+        #send vars file to other stages
+        cat $vars_file > $ALL_STAGES_VARS_FILE
       }
 
       # Required commands' execution starts from here
       pull_secrets_and_load_envvars
 
+    if [[ "$DEPLOY_TIER" == "Web" ]]; then
+      cd web
+      replace_web_placeholders
+      aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_WEB_REPO_URL
+      docker build -t $ECR_WEB_REPO_URL .
+      docker push $ECR_WEB_REPO_URL
+    elif [[ "$DEPLOY_TIER" == "Api" ]]; then
+      cd api
+      replace_api_placeholders
+      aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_API_REPO_URL
+      docker build -t $ECR_API_REPO_URL .
+      docker push $ECR_API_REPO_URL
+    elif [[ "$DEPLOY_TIER" == "Both" ]]; then
+      cd web;
+      replace_web_placeholders
+      aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_WEB_REPO_URL
+      docker build -t $ECR_WEB_REPO_URL .
+      docker push $ECR_WEB_REPO_URL
+      cd ../api;
+      replace_api_placeholders
+      aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_API_REPO_URL
+      docker build -t $ECR_API_REPO_URL .
+      docker push $ECR_API_REPO_URL
+      cd ..
+    fi
+
+aws-deploy:
+  stage: aws-deploy
+  image: python:latest
+  before_script:
+    - 'apt-get update && apt-get install -y jq'
+    - 'pip install awscli awsebcli --upgrade'
+  script:
+    - |
+
+      source $ALL_STAGES_VARS_FILE
+
       if [[ "$DEPLOY_TIER" == "Web" ]]; then
-        replace_web_placeholders
+        rm Dockerfile
         eb deploy $EB_WEB_ENV_NAME
       elif [[ "$DEPLOY_TIER" == "Api" ]]; then
-        replace_api_placeholders
+        rm Dockerfile
         eb deploy $EB_API_ENV_NAME
       elif [[ "$DEPLOY_TIER" == "Both" ]]; then
-         replace_web_placeholders
+         rm Dockerfile
          eb deploy $EB_WEB_ENV_NAME
-         cd ..;
-         replace_api_placeholders
+         cd ../api;
+         rm Dockerfile
          eb deploy $EB_API_ENV_NAME
       fi
 
