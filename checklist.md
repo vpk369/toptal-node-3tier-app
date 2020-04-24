@@ -18,6 +18,6 @@ On local machine:
 ```
 aws --version
 ```
-- Determine values for <a href="cloudformation/vars.sh">cloudformation/vars.sh</a> based on the params in all the stacks files located in cloudformation folder of this repo 
+- Determine values for <a href="cloudformation/vars.sh">cloudformation/vars.sh</a> based on the params in all the stacks files located in cloudformation/templates folder of this repo 
 - Generate ssh key pair by following instructions on https://help.github.com/en/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent
 

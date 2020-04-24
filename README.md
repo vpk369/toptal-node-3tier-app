@@ -50,7 +50,7 @@ Default output format [None]:      <just hit enter>
 For every aws command you run, make sure you add the option ```--profile ToptalAdmin``` so that the cli will consider those keys
 
 
-Infrastructure setup will be launched from local machine by running below commands  
+Infrastructure setup in Virginia region will be launched from local machine by running below commands  
 ```
 git clone https://git.toptal.com/screening/pradeep-kumar-vijayagiri.git toptal-prod
 cd toptal-prod/cloudformation/
@@ -58,7 +58,7 @@ bash init.sh
 ```
 when you run above commands, CloudFormation stacks will be created at https://console.aws.amazon.com/cloudformation/home?region=us-east-1
 
-Once the stack is created, you can connect to the instances in private subnet through SSM
+Once all the stacks are created, you can connect to the instances in private subnet through <a href="https://medium.com/@korniichuk/session-manager-e724eb105eb7">Session Manager</a>
 
 Note: When you are redepoying stacks, run below commands to delete secrets:
 ```
@@ -69,9 +69,9 @@ aws secretsmanager delete-secret --secret-id PROD/Toptal/WebEB --force-delete-wi
 aws secretsmanager delete-secret --secret-id PROD/Toptal/DBCred --force-delete-without-recovery --profile ToptalAdmin
 ```
 
-Ensure that there is no S3 bucket named 'toptal-website-virginia' in virginia region. If you think that is needed and being used by other projects, launch the stack with different S3 bucket name in <a href="cloudformation/vars.sh">cloudformation/vars.sh</a> file
+Ensure that there is no S3 bucket named 'toptal-website-virginia' in virginia region. If that bucket is being used by other projects, launch the stack with different S3 bucket name by configuring `S3BucketName` variable in <a href="cloudformation/vars.sh">cloudformation/vars.sh</a> file.
 
-Ensure that there are no Elastic Beanstalk applications running on name 'Toptal-PROD-Api-App' or 'Toptal-PROD-Api-Web'
+Ensure that there are no Elastic Beanstalk applications running on name 'Toptal-PROD-Api-App' or 'Toptal-PROD-Api-Web' in virginia region.
 
 Create 2 ECR repos for hosting Api and Web docker container images by running below commands:
  ```
@@ -85,14 +85,14 @@ AWS_ACCESS_KEY_ID        xxxxxxxxxxxx
 AWS_SECRET_ACCESS_KEY    xxxxxxxx
 AWS_BASE_REGION          us-east-1
 DEPLOY_TIER              allowed valuse are: Web / Api / Both
-ECR_API_REPO_URL         894541307925.dkr.ecr.us-east-1.amazonaws.com/toptal-api
-ECR_WEB_REPO_URL         894541307925.dkr.ecr.us-east-1.amazonaws.com/toptal-web
+ECR_API_REPO_URL         <aws_account_id>.dkr.ecr.us-east-1.amazonaws.com/toptal-api
+ECR_WEB_REPO_URL         <aws_account_id>.dkr.ecr.us-east-1.amazonaws.com/toptal-web
 ```
 <img src="cloudformation/img/gitlab-settings-png.png"
      alt="Architecture diagram"
      style="float: left; margin-right: 10px;" />
 
-For scaling instances in API/Web tiers set the autoscale min and max counts in the following commands:
+For scaling instances in API/Web tiers, set the autoscaling min and max count values in the following commands:
 ```
 # For scaling API instances
 aws cloudformation deploy --template-file templates/api-stack.yaml --stack-name Toptal-PROD-Api --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM --parameter-overrides AutoScalingMinInstanceCount=1 AutoScalingMaxInstanceCount=2
