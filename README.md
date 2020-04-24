@@ -71,6 +71,8 @@ aws secretsmanager delete-secret --secret-id PROD/Toptal/DBCred --force-delete-w
 
 Ensure that there is no S3 bucket named 'toptal-website-virginia' in virginia region. If you think that is needed and being used by other projects, launch the stack with different S3 bucket name in <a href="cloudformation/vars.sh">cloudformation/vars.sh</a> file
 
+Ensure that there are no Elastic Beanstalk applications running on name 'Toptal-PROD-Api-App' or 'Toptal-PROD-Api-Web'
+
 Create 2 ECR repos for hosting Api and Web docker container images by running below commands:
  ```
 aws ecr create-repository --repository-name toptal-api --profile ToptalAdmin

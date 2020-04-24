@@ -5,15 +5,6 @@ Description: This template creates required security groups for Toptal POC Websi
 
 ##### PLEASE ENSURE ALL PARAMETER VALUES ARE CORRECT ###########
 Parameters:
-  vpcID:
-    Description: vpcID for Creating Security Group
-    Type: String
-    Default: 'vpc-09fd98ff1e314078d'
-
-  VpcCIDR: 
-      Description: Please enter the IP range (CIDR notation) for this VPC
-      Type: String
-      Default: 172.24.32.0/22
 
   NetworkStackName:
     Description: Enter VPC ID
@@ -59,7 +50,9 @@ Resources:
     Properties:
       GroupName: !Sub ${productName}-${environmentName}-VPN
       GroupDescription: Allow ports 80  22 and 443 via VPN
-      VpcId: !Ref vpcID
+      VpcId: 
+        Fn::ImportValue:
+            !Sub "${NetworkStackName}:VPCId"
       SecurityGroupIngress:
         - CidrIp: !Ref vpnIp
           FromPort: 22
@@ -81,22 +74,30 @@ Resources:
           IpProtocol: icmp  
           ToPort: -1
           Description: VPN Gateway
-        - CidrIp: !Ref VpcCIDR
+        - CidrIp: 
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           FromPort: 22
           IpProtocol: tcp
           ToPort: 22
           Description: Within VPC
-        - CidrIp: !Ref VpcCIDR
+        - CidrIp: 
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           FromPort: 80
           IpProtocol: tcp
           ToPort: 80
           Description: Within VPC
-        - CidrIp: !Ref VpcCIDR
+        - CidrIp: 
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           FromPort: 443
           IpProtocol: tcp
           ToPort: 443
           Description: Within VPC
-        - CidrIp: !Ref VpcCIDR
+        - CidrIp: 
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           FromPort: -1
           IpProtocol: icmp
           ToPort: -1
@@ -121,7 +122,9 @@ Resources:
     Properties:
       GroupName: !Sub ${productName}-${environmentName}-Web-Server
       GroupDescription: Allow ports to web server
-      VpcId: !Ref vpcID
+      VpcId: 
+        Fn::ImportValue:
+            !Sub "${NetworkStackName}:VPCId"
       SecurityGroupIngress:
         - CidrIp: !Ref vpnIp
           FromPort: 22
@@ -143,17 +146,23 @@ Resources:
           IpProtocol: icmp  
           ToPort: -1
           Description: VPN Gateway
-        - CidrIp: !Ref VpcCIDR
+        - CidrIp: 
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           FromPort: 22
           IpProtocol: tcp
           ToPort: 22
           Description: Within VPC
-        - CidrIp: !Ref VpcCIDR
+        - CidrIp: 
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           FromPort: 80
           IpProtocol: tcp
           ToPort: 80
           Description: Within VPC
-        - CidrIp: !Ref VpcCIDR
+        - CidrIp: 
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           FromPort: -1
           IpProtocol: icmp
           ToPort: -1
@@ -183,7 +192,9 @@ Resources:
     Properties:
       GroupName: !Sub ${productName}-${environmentName}-Web-Server-LB
       GroupDescription: Allow ports to web server-LB
-      VpcId: !Ref vpcID
+      VpcId: 
+        Fn::ImportValue:
+            !Sub "${NetworkStackName}:VPCId"
       SecurityGroupIngress:
         # - CidrIp: !Ref vpnIp
         - CidrIp: 0.0.0.0/0  #this should be publicly open for CDN
@@ -196,12 +207,16 @@ Resources:
           IpProtocol: tcp
           ToPort: 443
           Description: VPN Gateway
-        - CidrIp: !Ref VpcCIDR
+        - CidrIp: 
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           FromPort: 80
           IpProtocol: tcp
           ToPort: 80
           Description: Within VPC
-        - CidrIp: !Ref VpcCIDR
+        - CidrIp: 
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           FromPort: 443
           IpProtocol: tcp
           ToPort: 443
@@ -226,7 +241,9 @@ Resources:
     Properties:
       GroupName: !Sub ${productName}-${environmentName}-Api-Server
       GroupDescription: Allow ports to Api server
-      VpcId: !Ref vpcID
+      VpcId: 
+        Fn::ImportValue:
+            !Sub "${NetworkStackName}:VPCId"
       SecurityGroupIngress:
         - CidrIp: !Ref vpnIp
           FromPort: 22
@@ -248,17 +265,23 @@ Resources:
           IpProtocol: icmp  
           ToPort: -1
           Description: VPN Gateway
-        - CidrIp: !Ref VpcCIDR
+        - CidrIp: 
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           FromPort: 22
           IpProtocol: tcp
           ToPort: 22
           Description: Within VPC
-        - CidrIp: !Ref VpcCIDR
+        - CidrIp: 
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           FromPort: 80
           IpProtocol: tcp
           ToPort: 80
           Description: Within VPC
-        - CidrIp: !Ref VpcCIDR
+        - CidrIp: 
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           FromPort: -1
           IpProtocol: icmp
           ToPort: -1
@@ -288,7 +311,9 @@ Resources:
     Properties:
       GroupName: !Sub ${productName}-${environmentName}-Api-Server-LB
       GroupDescription: Allow ports to API Server-LB
-      VpcId: !Ref vpcID
+      VpcId: 
+        Fn::ImportValue:
+            !Sub "${NetworkStackName}:VPCId"
       SecurityGroupIngress:
         # - CidrIp: !Ref vpnIp
         - CidrIp: 0.0.0.0/0  #this should be publicly open for CDN
@@ -311,12 +336,16 @@ Resources:
           IpProtocol: tcp
           ToPort: 443
           Description: VPN Gateway
-        - CidrIp: !Ref VpcCIDR
+        - CidrIp: 
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           FromPort: 80
           IpProtocol: tcp
           ToPort: 80
           Description: Within VPC
-        - CidrIp: !Ref VpcCIDR
+        - CidrIp: 
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           FromPort: 443
           IpProtocol: tcp
           ToPort: 443
@@ -341,14 +370,18 @@ Resources:
     Properties:
       GroupName: !Sub ${productName}-${environmentName}-RDS
       GroupDescription: SG for RDS
-      VpcId: !Ref vpcID
+      VpcId:
+          Fn::ImportValue:
+            !Sub "${NetworkStackName}:VPCId"
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 5432
           ToPort: 5432
           SourceSecurityGroupId: !GetAtt APIServerSG.GroupId
           Description: Data from API Server
-        - CidrIp: !Ref VpcCIDR
+        - CidrIp:
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"   
           FromPort: 5432
           IpProtocol: tcp
           ToPort: 5432
@@ -371,7 +404,9 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties: 
       GroupDescription: Allow all ports within the VPC.
-      VpcId: !Ref vpcID
+      VpcId: 
+        Fn::ImportValue:
+            !Sub "${NetworkStackName}:VPCId"
       Tags: 
         - Key: Name
           Value: !Sub ${productName}-${environmentName}-MainSG

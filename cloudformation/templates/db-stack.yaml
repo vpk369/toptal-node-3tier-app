@@ -40,10 +40,10 @@ Parameters:
     Type: String
     Default: Toptal-PROD-DBinstance
 
-  SubnetIds:
-    Description: SubnetIds (private) for Subnet Group
-    Type: List<AWS::EC2::Subnet::Id>
-    Default: "subnet-01d54f4ea499a1120,subnet-011deb299e8f5b0bd"
+  NetworkStackName:
+    Description: Name of the Netwrok stack. This is used in exporting vpc values from that stack.
+    Type: String
+    Default: "Toptal-PROD-Network"
 
   DBInstanceClass:
     Description: DB Instance Class for the db. Select sizing based on the environment; PROD being db.r5.2xlarge and DEV being db.t3.small
@@ -120,8 +120,14 @@ Resources:
   DBSubnetGroup:
     Type: "AWS::RDS::DBSubnetGroup"
     Properties:
-      DBSubnetGroupDescription: "subnet group for RDS"
-      SubnetIds: !Ref SubnetIds
+      DBSubnetGroupDescription: "Private subnet groups for RDS"
+      SubnetIds:
+        -
+          Fn::ImportValue:
+            !Sub "${NetworkStackName}:PrivateSubnet1"
+        -
+          Fn::ImportValue:
+            !Sub "${NetworkStackName}:PrivateSubnet2"
       Tags:
         -
           Key: "Name"

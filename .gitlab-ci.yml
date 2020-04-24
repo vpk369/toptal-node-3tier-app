@@ -88,31 +88,27 @@ docker-build-push:
       # Required commands' execution starts from here
       pull_secrets_and_load_envvars
 
-    if [[ "$DEPLOY_TIER" == "Web" ]]; then
-      cd web
-      replace_web_placeholders
-      aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_WEB_REPO_URL
-      docker build -t $ECR_WEB_REPO_URL .
-      docker push $ECR_WEB_REPO_URL
-    elif [[ "$DEPLOY_TIER" == "Api" ]]; then
-      cd api
-      replace_api_placeholders
-      aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_API_REPO_URL
-      docker build -t $ECR_API_REPO_URL .
-      docker push $ECR_API_REPO_URL
-    elif [[ "$DEPLOY_TIER" == "Both" ]]; then
-      cd web;
-      replace_web_placeholders
-      aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_WEB_REPO_URL
-      docker build -t $ECR_WEB_REPO_URL .
-      docker push $ECR_WEB_REPO_URL
-      cd ../api;
-      replace_api_placeholders
-      aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_API_REPO_URL
-      docker build -t $ECR_API_REPO_URL .
-      docker push $ECR_API_REPO_URL
-      cd ..
-    fi
+      if [[ "$DEPLOY_TIER" == "Web" ]]; then
+        replace_web_placeholders
+        aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_WEB_REPO_URL
+        docker build -t $ECR_WEB_REPO_URL .
+        docker push $ECR_WEB_REPO_URL
+      elif [[ "$DEPLOY_TIER" == "Api" ]]; then
+        replace_api_placeholders
+        aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_API_REPO_URL
+        docker build -t $ECR_API_REPO_URL .
+        docker push $ECR_API_REPO_URL
+      elif [[ "$DEPLOY_TIER" == "Both" ]]; then
+        replace_web_placeholders
+        aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_WEB_REPO_URL
+        docker build -t $ECR_WEB_REPO_URL .
+        docker push $ECR_WEB_REPO_URL
+        cd ..;
+        replace_api_placeholders
+        aws ecr get-login-password --region $AWS_REGION | docker login -u AWS --password-stdin $ECR_API_REPO_URL
+        docker build -t $ECR_API_REPO_URL .
+        docker push $ECR_API_REPO_URL
+      fi
 
 aws-deploy:
   stage: aws-deploy
@@ -134,7 +130,7 @@ aws-deploy:
       elif [[ "$DEPLOY_TIER" == "Both" ]]; then
          rm Dockerfile
          eb deploy $EB_WEB_ENV_NAME
-         cd ../api;
+         cd ..;
          rm Dockerfile
          eb deploy $EB_API_ENV_NAME
       fi
