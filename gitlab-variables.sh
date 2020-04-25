@@ -35,6 +35,9 @@ sed -i "s#%SECURITY_GROUP%#${VPN_SG}#g" $EB_EXT_DIR/02-launch.config
 sed -i "s#%CONN_STRING%#${CONN_STRING}#g; s#%PORT%#${PORT}#g" ./entrypoint.sh
 }
 
+sed -i "s#%ECR_WEB_REPO_URL%#${ECR_WEB_REPO_URL}#g" ./web/Dockerrun.aws.json; # available in gitlab env vars
+sed -i "s#%ECR_API_REPO_URL%#${ECR_API_REPO_URL}#g" ./api/Dockerrun.aws.json; # available in gitlab env vars
+
 # pull_secrets_and_load_envvars
 aws secretsmanager get-secret-value --secret-id $SECRETS_API_EB --output json --region $AWS_REGION | jq --raw-output '.SecretString' > $secrets_api_eb_file
 aws secretsmanager get-secret-value --secret-id $SECRETS_WEB_EB --output json --region $AWS_REGION | jq --raw-output '.SecretString' > $secrets_web_eb_file
