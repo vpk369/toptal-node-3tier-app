@@ -149,5 +149,6 @@ Elasticbeanstalk:
 https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.logging.html
 https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/ebextensions.html
 https://github.com/awsdocs/elastic-beanstalk-samples/blob/master/configuration-files/aws-provided/instance-configuration/logs-streamtocloudwatch-linux.config
+https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/command-options-general.html
 ```
 
