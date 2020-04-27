@@ -303,13 +303,13 @@ Resources:
               OptionName: StickinessLBCookieDuration
               Value: 43200
 
-            # - Namespace: aws:elasticbeanstalk:sns:topics
-            #   OptionName: Notification Endpoint
-            #   Value: !Ref CreatedByTag
+            - Namespace: aws:elasticbeanstalk:sns:topics
+              OptionName: Notification Endpoint
+              Value: !Ref CreatedByTag
 
-            # - Namespace: aws:elasticbeanstalk:sns:topics
-            #   OptionName: Notification Protocol
-            #   Value: email
+            - Namespace: aws:elasticbeanstalk:sns:topics
+              OptionName: Notification Protocol
+              Value: email
 
     Environment:
       Type: AWS::ElasticBeanstalk::Environment
