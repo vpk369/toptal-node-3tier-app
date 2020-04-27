@@ -49,11 +49,11 @@ Ensure that there is no S3 bucket named 'toptal-website-virginia' in virginia re
 aws s3 rm s3://toptal-website-virginia/ --recursive  --profile ToptalAdmin --region us-east-1
 ```
 
-Ensure that there are no Elastic Beanstalk applications running on name 'Toptal-PROD-Api-App' or 'Toptal-PROD-Api-Web' in virginia region.
+Ensure that there are no Elastic Beanstalk environments running on application 'Toptal-PROD-Api-App' or 'Toptal-PROD-Api-Web' in virginia region.
 
 ```
-aws elasticbeanstalk delete-application --application-name Toptal-PROD-Api-App --profile ToptalAdmin --region us-east-1
-aws elasticbeanstalk delete-application --application-name Toptal-PROD-Web-App --profile ToptalAdmin --region us-east-1
+aws elasticbeanstalk terminate-environment --environment-name Toptal-PROD-ApiServer --profile ToptalAdmin --region us-east-1
+aws elasticbeanstalk terminate-environment --environment-name Toptal-PROD-WebServer --profile ToptalAdmin --region us-east-1
 ```
 
 Create 2 ECR repos for hosting Api and Web docker container images by running below commands:
@@ -70,8 +70,6 @@ bash init.sh
 ```
 
 When you run above commands, CloudFormation stacks will be created at https://console.aws.amazon.com/cloudformation/home?region=us-east-1 and the required secrets for api and web will be created at https://console.aws.amazon.com/secretsmanager/home?region=us-east-1
-
-> Note: Code related to deploying WAF and CDN are temporarily commented and you can enable it and deploy the stacks when needed.
 
 Once all the stacks are created, you can connect to the instances in private subnet through <a href="https://medium.com/@korniichuk/session-manager-e724eb105eb7">Session Manager</a>
 
