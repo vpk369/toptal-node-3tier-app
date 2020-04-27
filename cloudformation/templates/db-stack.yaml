@@ -258,7 +258,7 @@ Resources:
       DBName: !Ref DatabaseName
       SecretsNameRDS: !Ref DBSecretsName
 
-  DBPagerDutySNSTopic:
+  SNSTopicForDB:
     Type: AWS::SNS::Topic
     Properties:
       DisplayName: PagerDuty Integration for DB
@@ -269,12 +269,12 @@ Resources:
   DBHighCPUUtilizationAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      # When state goes from ok to alarm, creates an incident in PagerDuty
+      # When state goes from ok to alarm, notify SNS Topic
       AlarmActions:
-      - !Ref DBPagerDutySNSTopic
-      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      - !Ref SNSTopicForDB
+      # When state goes from alarm to ok, notify SNS Topic
       OKActions:
-      - !Ref DBPagerDutySNSTopic
+      - !Ref SNSTopicForDB
       AlarmDescription: CPU utilization above 70% for the past 5 minutes for uCMS DB
       AlarmName: !Sub ${ProductName}-${EnvironmentName}-Database-HighCPUUtilizationAlarm
       MetricName: CPUUtilization
@@ -291,12 +291,12 @@ Resources:
   DBHighMemoryUtilizationAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      # When state goes from ok to alarm, creates an incident in PagerDuty
+      # When state goes from ok to alarm, notify SNS Topic
       AlarmActions:
-      - !Ref DBPagerDutySNSTopic
-      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      - !Ref SNSTopicForDB
+      # When state goes from alarm to ok, notify SNS Topic
       OKActions:
-      - !Ref DBPagerDutySNSTopic
+      - !Ref SNSTopicForDB
       AlarmDescription: Freeable memory under 700MB for the past 5 minutes
       AlarmName: !Sub ${ProductName}-${EnvironmentName}-Database-HighMemoryUtilizationAlarm
       MetricName: FreeableMemory
@@ -313,12 +313,12 @@ Resources:
   DBLowStorageAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      # When state goes from ok to alarm, creates an incident in PagerDuty
+      # When state goes from ok to alarm, notify SNS Topic
       AlarmActions:
-      - !Ref DBPagerDutySNSTopic
-      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      - !Ref SNSTopicForDB
+      # When state goes from alarm to ok, notify SNS Topic
       OKActions:
-      - !Ref DBPagerDutySNSTopic
+      - !Ref SNSTopicForDB
       AlarmDescription: Storage under 2GB #normally 10
       AlarmName: !Sub ${ProductName}-${EnvironmentName}-Database-LowStorageAlarm
       MetricName: FreeStorageSpace
@@ -335,12 +335,12 @@ Resources:
   DBReadIOPSAboveBasePerformance:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      # When state goes from ok to alarm, creates an incident in PagerDuty
+      # When state goes from ok to alarm, notify SNS Topic
       AlarmActions:
-      - !Ref DBPagerDutySNSTopic
-      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      - !Ref SNSTopicForDB
+      # When state goes from alarm to ok, notify SNS Topic
       OKActions:
-      - !Ref DBPagerDutySNSTopic
+      - !Ref SNSTopicForDB
       AlarmDescription: Read IOPS above 1000
       AlarmName: !Sub ${ProductName}-${EnvironmentName}-DBHighReadIOPS
       MetricName: ReadIOPS
@@ -357,12 +357,12 @@ Resources:
   DBWriteIOPSAboveBasePerformance:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      # When state goes from ok to alarm, creates an incident in PagerDuty
+      # When state goes from ok to alarm, notify SNS Topic
       AlarmActions:
-      - !Ref DBPagerDutySNSTopic
-      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      - !Ref SNSTopicForDB
+      # When state goes from alarm to ok, notify SNS Topic
       OKActions:
-      - !Ref DBPagerDutySNSTopic
+      - !Ref SNSTopicForDB
       AlarmDescription: Write IOPS above 1000
       AlarmName: !Sub ${ProductName}-${EnvironmentName}-DBHighWriteIOPS
       MetricName: WriteIOPS
@@ -379,12 +379,12 @@ Resources:
   DBHighReadLatency:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      # When state goes from ok to alarm, creates an incident in PagerDuty
+      # When state goes from ok to alarm, notify SNS Topic
       AlarmActions:
-      - !Ref DBPagerDutySNSTopic
-      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      - !Ref SNSTopicForDB
+      # When state goes from alarm to ok, notify SNS Topic
       OKActions:
-      - !Ref DBPagerDutySNSTopic
+      - !Ref SNSTopicForDB
       AlarmDescription: Read Latency above 4ms
       AlarmName: !Sub ${ProductName}-${EnvironmentName}-DBHighReadLatency
       MetricName: ReadLatency
@@ -401,12 +401,12 @@ Resources:
   DBHighWriteLatency:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      # When state goes from ok to alarm, creates an incident in PagerDuty
+      # When state goes from ok to alarm, notify SNS Topic
       AlarmActions:
-      - !Ref DBPagerDutySNSTopic
-      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      - !Ref SNSTopicForDB
+      # When state goes from alarm to ok, notify SNS Topic
       OKActions:
-      - !Ref DBPagerDutySNSTopic
+      - !Ref SNSTopicForDB
       AlarmDescription: Write Latency above 4ms
       AlarmName: !Sub ${ProductName}-${EnvironmentName}-DBHighWriteLatency
       MetricName: WriteLatency
@@ -423,12 +423,12 @@ Resources:
   DBHighReadThroughput:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      # When state goes from ok to alarm, creates an incident in PagerDuty
+      # When state goes from ok to alarm, notify SNS Topic
       AlarmActions:
-      - !Ref DBPagerDutySNSTopic
-      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      - !Ref SNSTopicForDB
+      # When state goes from alarm to ok, notify SNS Topic
       OKActions:
-      - !Ref DBPagerDutySNSTopic
+      - !Ref SNSTopicForDB
       AlarmDescription: Read throughput above 20MB over 5mins
       AlarmName: !Sub ${ProductName}-${EnvironmentName}-DBHighReadThroughput
       MetricName: ReadThroughput
@@ -445,12 +445,12 @@ Resources:
   DBHighWriteThroughput:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      # When state goes from ok to alarm, creates an incident in PagerDuty
+      # When state goes from ok to alarm, notify SNS Topic
       AlarmActions:
-      - !Ref DBPagerDutySNSTopic
-      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      - !Ref SNSTopicForDB
+      # When state goes from alarm to ok, notify SNS Topic
       OKActions:
-      - !Ref DBPagerDutySNSTopic
+      - !Ref SNSTopicForDB
       AlarmDescription: Write throughput above 20MB over 5mins
       AlarmName: !Sub ${ProductName}-${EnvironmentName}-DBHighWriteThroughput
       MetricName: WriteThroughput
@@ -467,12 +467,12 @@ Resources:
   DBHighDiskQueueDepth:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      # When state goes from ok to alarm, creates an incident in PagerDuty
+      # When state goes from ok to alarm, notify SNS Topic
       AlarmActions:
-      - !Ref DBPagerDutySNSTopic
-      # When state goes from alarm to ok, resolves an incident in PagerDuty
+      - !Ref SNSTopicForDB
+      # When state goes from alarm to ok, notify SNS Topic
       OKActions:
-      - !Ref DBPagerDutySNSTopic
+      - !Ref SNSTopicForDB
       AlarmDescription: Disk queue above 100 transactions
       AlarmName: !Sub ${ProductName}-${EnvironmentName}-DBHighDiskQueueDepth
       MetricName: DiskQueueDepth
