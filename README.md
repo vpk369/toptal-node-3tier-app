@@ -56,6 +56,15 @@ aws elasticbeanstalk terminate-environment --environment-name Toptal-PROD-ApiSer
 aws elasticbeanstalk terminate-environment --environment-name Toptal-PROD-WebServer --profile ToptalAdmin --region us-east-1
 ```
 
+> Note: When you are redepoying stacks, run below commands to delete secrets:
+```
+aws secretsmanager delete-secret --secret-id PROD/Toptal/ApiEB --force-delete-without-recovery  --profile ToptalAdmin 
+
+aws secretsmanager delete-secret --secret-id PROD/Toptal/WebEB --force-delete-without-recovery --profile ToptalAdmin
+
+aws secretsmanager delete-secret --secret-id PROD/Toptal/DBCred --force-delete-without-recovery --profile ToptalAdmin
+```
+
 Create 2 ECR repos for hosting Api and Web docker container images by running below commands:
  ```
 aws ecr create-repository --repository-name toptal-api --profile ToptalAdmin
@@ -72,15 +81,6 @@ bash init.sh
 When you run above commands, CloudFormation stacks will be created at https://console.aws.amazon.com/cloudformation/home?region=us-east-1 and the required secrets for api and web will be created at https://console.aws.amazon.com/secretsmanager/home?region=us-east-1
 
 Once all the stacks are created, you can connect to the instances in private subnet through <a href="https://medium.com/@korniichuk/session-manager-e724eb105eb7">Session Manager</a>
-
-> Note: When you are redepoying stacks, run below commands to delete secrets:
-```
-aws secretsmanager delete-secret --secret-id PROD/Toptal/ApiEB --force-delete-without-recovery  --profile ToptalAdmin 
-
-aws secretsmanager delete-secret --secret-id PROD/Toptal/WebEB --force-delete-without-recovery --profile ToptalAdmin
-
-aws secretsmanager delete-secret --secret-id PROD/Toptal/DBCred --force-delete-without-recovery --profile ToptalAdmin
-```
 
 ## Gitlab variables setup for CI/CD (api & web)
 
