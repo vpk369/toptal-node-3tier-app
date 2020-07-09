@@ -1,7 +1,7 @@
 # Stack name ---  Toptal-PROD-Web
 Description: This template creates EB application and environment for web servers.
 Parameters:
-  envName:
+  EnvironmentName:
     Description: Environment name for tagging
     Type: String
     AllowedValues: 
@@ -317,7 +317,7 @@ Resources:
         ApplicationName: !Ref EBAppName 
         CNAMEPrefix: !Ref EbEnvironmentURL 
         TemplateName: !Ref ConfigurationTemplate
-        EnvironmentName: !Join [ "-", [ !Ref ProductName, !Ref envName, WebServer] ] 
+        EnvironmentName: !Join [ "-", [ !Ref ProductName, !Ref EnvironmentName, WebServer] ] 
         Tags:
           - 
             Key: Business / Service Owner
@@ -330,10 +330,10 @@ Resources:
             Value: !Ref ProductName
           -
             Key: Environment
-            Value: !Sub ${envName}
+            Value: !Sub ${EnvironmentName}
           -
             Key: Name
-            Value: !Sub ${ProductName}-${envName}
+            Value: !Sub ${ProductName}-${EnvironmentName}
           - 
             Key: CreatedBy
             Value: !Sub ${CreatedByTag}
@@ -363,7 +363,7 @@ Resources:
     AppPolicies:
       Type: AWS::IAM::Policy
       Properties:
-        PolicyName: !Sub ${ProductName}-${envName}-Secrets
+        PolicyName: !Sub ${ProductName}-${EnvironmentName}-Secrets
         Roles:
         - !Ref AppRole
         PolicyDocument:
@@ -385,7 +385,7 @@ Resources:
     AppPolicies2:
       Type: AWS::IAM::Policy
       Properties:
-        PolicyName: !Sub ${ProductName}-${envName}-ECR-ReadOnly
+        PolicyName: !Sub ${ProductName}-${EnvironmentName}-ECR-ReadOnly
         Roles:
         - !Ref AppRole
         PolicyDocument:
@@ -407,7 +407,7 @@ Resources:
     AppPolicies3:
       Type: AWS::IAM::Policy
       Properties:
-        PolicyName: !Sub ${ProductName}-${envName}-EB-ReadOnly
+        PolicyName: !Sub ${ProductName}-${EnvironmentName}-EB-ReadOnly
         Roles:
         - !Ref AppRole
         PolicyDocument:
@@ -423,7 +423,7 @@ Resources:
     AppPolicies4:
       Type: AWS::IAM::Policy
       Properties:
-        PolicyName: !Sub ${ProductName}-${envName}-S3-Access
+        PolicyName: !Sub ${ProductName}-${EnvironmentName}-S3-Access
         Roles:
         - !Ref AppRole
         PolicyDocument:
@@ -484,7 +484,7 @@ Resources:
               var responseData = {'passwordcheck': 'Password Valid!'};
               response.send(event, context, response.SUCCESS, responseData);
             };
-        FunctionName: !Join [ "-", [ !Ref ProductName, !Ref envName, WebServer, !Ref lambdaName ] ]
+        FunctionName: !Join [ "-", [ !Ref ProductName, !Ref EnvironmentName, WebServer, !Ref lambdaName ] ]
         Description: Lambda function for Toptal Web secrets
         Handler: index.handler
         MemorySize: 128
@@ -505,10 +505,10 @@ Resources:
             Value: !Ref ProductName
           -
             Key: Environment
-            Value: !Sub ${envName}
+            Value: !Sub ${EnvironmentName}
           - 
             Key: Name
-            Value: !Join [ "-", [ !Ref ProductName, !Ref envName, !Ref lambdaName ] ]
+            Value: !Join [ "-", [ !Ref ProductName, !Ref EnvironmentName, !Ref lambdaName ] ]
 
     CustomResourceLambda:
       Type: "Custom::Lambda"
@@ -528,13 +528,13 @@ Resources:
     #     DistributionConfig:
     #       Origins:
     #       - DomainName: !GetAtt Environment.EndpointURL
-    #         Id: !Join [ "-", [ !Ref ProductName, !Ref envName, 'Origin' ] ]
+    #         Id: !Join [ "-", [ !Ref ProductName, !Ref EnvironmentName, 'Origin' ] ]
     #         CustomOriginConfig:
     #           HTTPPort: '80'
     #           HTTPSPort: '443'
     #           OriginProtocolPolicy: http-only
     #       Enabled: 'true'
-    #       Comment: !Join [ ' ', [ 'CDN for ', !Ref ProductName, !Ref envName ] ]
+    #       Comment: !Join [ ' ', [ 'CDN for ', !Ref ProductName, !Ref EnvironmentName ] ]
     #       # DefaultRootObject: index.html
     #       Logging:
     #         IncludeCookies: 'true'
@@ -544,7 +544,7 @@ Resources:
     #       # - mysite.example.com
     #       # - "*.yoursite.example.com"
     #       DefaultCacheBehavior:
-    #         TargetOriginId: !Join [ "-", [ !Ref ProductName, !Ref envName, 'Origin' ] ]
+    #         TargetOriginId: !Join [ "-", [ !Ref ProductName, !Ref EnvironmentName, 'Origin' ] ]
     #         # SmoothStreaming: 'false'
     #         ForwardedValues:
     #           QueryString: false

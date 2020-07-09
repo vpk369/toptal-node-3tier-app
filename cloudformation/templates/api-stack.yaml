@@ -1,7 +1,7 @@
 # Stack name ---  Toptal-PROD-Api
 Description: This template creates EB application and environment for api servers.
 Parameters:
-  envName:
+  EnvironmentName:
     Description: Environment name for tagging
     Type: String
     AllowedValues: 
@@ -317,7 +317,7 @@ Resources:
         ApplicationName: !Ref EBAppName 
         CNAMEPrefix: !Ref EbEnvironmentURL 
         TemplateName: !Ref ConfigurationTemplate
-        EnvironmentName: !Join [ "-", [ !Ref ProductName, !Ref envName, ApiServer] ] 
+        EnvironmentName: !Join [ "-", [ !Ref ProductName, !Ref EnvironmentName, ApiServer] ] 
         Tags:
           - 
             Key: Business / Service Owner
@@ -330,10 +330,10 @@ Resources:
             Value: !Ref ProductName
           -
             Key: Environment
-            Value: !Sub ${envName}
+            Value: !Sub ${EnvironmentName}
           -
             Key: Name
-            Value: !Sub ${ProductName}-${envName}
+            Value: !Sub ${ProductName}-${EnvironmentName}
           - 
             Key: CreatedBy
             Value: !Sub ${CreatedByTag}
@@ -363,7 +363,7 @@ Resources:
     AppPolicies:
       Type: AWS::IAM::Policy
       Properties:
-        PolicyName: !Sub ${ProductName}-${envName}-Secrets
+        PolicyName: !Sub ${ProductName}-${EnvironmentName}-Secrets
         Roles:
         - !Ref AppRole
         PolicyDocument:
@@ -385,7 +385,7 @@ Resources:
     AppPolicies2:
       Type: AWS::IAM::Policy
       Properties:
-        PolicyName: !Sub ${ProductName}-${envName}-ECR-ReadOnly
+        PolicyName: !Sub ${ProductName}-${EnvironmentName}-ECR-ReadOnly
         Roles:
         - !Ref AppRole
         PolicyDocument:
@@ -407,7 +407,7 @@ Resources:
     AppPolicies3:
       Type: AWS::IAM::Policy
       Properties:
-        PolicyName: !Sub ${ProductName}-${envName}-EB-ReadOnly
+        PolicyName: !Sub ${ProductName}-${EnvironmentName}-EB-ReadOnly
         Roles:
         - !Ref AppRole
         PolicyDocument:
@@ -423,7 +423,7 @@ Resources:
     AppPolicies4:
       Type: AWS::IAM::Policy
       Properties:
-        PolicyName: !Sub ${ProductName}-${envName}-S3-Access
+        PolicyName: !Sub ${ProductName}-${EnvironmentName}-S3-Access
         Roles:
         - !Ref AppRole
         PolicyDocument:
@@ -484,7 +484,7 @@ Resources:
               var responseData = {'passwordcheck': 'Password Valid!'};
               response.send(event, context, response.SUCCESS, responseData);
             };
-        FunctionName: !Join [ "-", [ !Ref ProductName, !Ref envName, apiserver, !Ref lambdaName ] ]
+        FunctionName: !Join [ "-", [ !Ref ProductName, !Ref EnvironmentName, apiserver, !Ref lambdaName ] ]
         Description: Lambda function for Toptal Api secrets
         Handler: index.handler
         MemorySize: 128
@@ -505,10 +505,10 @@ Resources:
             Value: !Ref ProductName
           -
             Key: Environment
-            Value: !Sub ${envName}
+            Value: !Sub ${EnvironmentName}
           - 
             Key: Name
-            Value: !Join [ "-", [ !Ref ProductName, !Ref envName, !Ref lambdaName ] ]
+            Value: !Join [ "-", [ !Ref ProductName, !Ref EnvironmentName, !Ref lambdaName ] ]
 
     CustomResourceLambda:
       Type: "Custom::Lambda"

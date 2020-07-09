@@ -3,7 +3,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: This template creates the shared infrastructure resources - S3 bucket.
 
 Parameters:
-  envName:
+  EnvironmentName:
     Description: Environment name for tagging
     Type: String
     AllowedValues: 
@@ -47,10 +47,10 @@ Resources:
           Value: !Ref ProductName
         -
           Key: Environment
-          Value: !Sub ${envName}
+          Value: !Sub ${EnvironmentName}
         -
           Key: Name
-          Value: !Sub ${ProductName}-${envName}-Bucket
+          Value: !Sub ${ProductName}-${EnvironmentName}-Bucket
         -
           Key: CreatedBy
           Value: vpk369@gmail.com
@@ -98,7 +98,7 @@ Resources:
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${ProductName}-${envName}-Lambda-Execution
+      RoleName: !Sub ${ProductName}-${EnvironmentName}-Lambda-Execution
       ManagedPolicyArns: 
         - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
       AssumeRolePolicyDocument:
@@ -112,7 +112,7 @@ Resources:
           - sts:AssumeRole
       Path: "/"
       Policies:
-      - PolicyName: !Sub ${ProductName}-${envName}-Lambda-SSM
+      - PolicyName: !Sub ${ProductName}-${EnvironmentName}-Lambda-SSM
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -128,7 +128,7 @@ Resources:
             - autoscaling:DescribeScalingActivities
             - logs:*
             Resource: "*"
-      - PolicyName: !Sub ${ProductName}-${envName}-Lambda-Secrets
+      - PolicyName: !Sub ${ProductName}-${EnvironmentName}-Lambda-Secrets
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
