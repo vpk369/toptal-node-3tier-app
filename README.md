@@ -110,6 +110,48 @@ aws cloudformation deploy --template-file templates/api-stack.yaml --stack-name 
 aws cloudformation deploy --template-file templates/web-stack.yaml --stack-name Toptal-PROD-Web --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM --parameter-overrides AutoScalingMinInstanceCount=1 AutoScalingMaxInstanceCount=2e
 
 ```
+About Wazuh: 
+Wazuh is a free and open source platform for threat detection, security monitoring, incident response and regulatory compliance. It can be used to monitor endpoints, cloud services and containers, and to aggregate and analyze data from external sources. 
+
+At the time of writing this document we have;
+
+Standalone Wazuh manager with Opendistro, Kibana, Elasticsearch and Filebeat installed deployed with Cloudformation
+
+Internal loadbalancer 
+
+
+Standalone Wazuh manager
+Reason for standalone installation is to have an easier architecture in terms of usability. 
+
+Wazuh manager instance(i-0b0e6d4fc5650e520) is in N.Virginia. Installed with Opendistro in order to make user role delegation possible along with making manager more secure. 
+
+Installation steps can be found at ALJAZEERAPLUS/Wazuh  
+
+To communicate, manager needs to allow ports:
+
+TCP 1515 → required for registration
+
+UDP 1514 → required for communication
+
+
+Wazuh Agents
+We have Wazuh agents in;
+
+OpenVPN(i-0a11b3e99d5ab3c76)
+
+Reporting_Dashboard(i-0a7dc07941e6ba2b5)
+
+To install Wazuh agent in an instance following commands must be run 
+
+WAZUH_MANAGER="MANAGER_IP" WAZUH_REGISTRATION_PASSWORD="PASSWORD" WAZUH_AGENT_NAME="AGENT_NAME" dpkg -i ./wazuh-agent.deb
+
+
+Internal loadbalancer
+Loadbalancer is set as internal to block any unwanted external access.
+
+Currently set to listen ports 443 and 1514. 
+
+1514 port is used by wazuh agent communications with manager.
 
 # References:
 
