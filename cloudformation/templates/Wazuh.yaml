@@ -1,0 +1,488 @@
+Description: >-
+  This template creates a Load Balancer which will forward requests to an
+  instance in the stack region
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+    AllowedValues:
+      - Non-Prod
+      - Prod
+      - Shared
+    Default: Shared
+  ProductName:
+    Description: A Product name that will be prefixed to resource names
+    Type: String
+    Default: Wazuh
+  ToolsUsername:
+    Description: Username to be used for kibana, Elasticsearch, Wazuh api
+    Type: String
+    NoEcho: true
+  ToolsPassword:
+    Description: Password to be used for kibana, Elasticsearch, Wazuh api
+    Type: String
+    NoEcho: true
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: String
+    Default: Generic_CSE_Tooling
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: m5.xlarge
+    AllowedValues:
+      - c5n.xlarge
+      - c3.2xlarge
+      - c4.2xlarge
+      - g2.2xlarge
+      - m1.xlarge
+      - m3.xlarge
+      - i3.large
+      - r3.large
+      - r4.large
+      - a1.2xlarge
+      - c5.2xlarge
+      - c5a.2xlarge
+      - c5d.2xlarge
+      - c6g.2xlarge
+      - g4dn.xlarge
+      - i3en.large
+      - inf1.2xlarge
+      - m4.xlarge
+      - m5.xlarge
+      - m5a.xlarge
+      - m5ad.xlarge
+      - m5d.xlarge
+      - m5dn.xlarge
+      - m5n.xlarge
+      - m6g.xlarge
+      - r5.large
+      - r5a.large
+      - r5ad.large
+      - r5d.large
+      - r5dn.large
+      - r5n.large
+      - r6g.large
+      - t2.xlarge
+      - t3.xlarge
+      - t3a.xlarge
+      - z1d.large
+      - m2.xlarge
+    ConstraintDescription: must be a valid EC2 instance type.
+  CreatorEmail:
+    Description: Creator e-mail of this stack
+    Type: String
+    Default: 'Vijayagirip@aljazeera.net'
+  TeamEmail:
+    Description: Team e-mail to send alerts to
+    Type: String
+    Default: 'Digital-Devops@aljazeera.net'
+  VpnIP:
+    Description: Vpn IP address
+    Type: String
+    Default: '34.238.5.53/32'
+Mappings:
+  AWSRegionToAMI: # Ami Id in specific to be used for launching instance
+    us-east-1:
+      AMIID: ami-0323c3dd2da7fb37d
+    us-west-2:
+      AMIID: ami-0d6621c01e8c2de2c
+    eu-west-1:
+      AMIID: ami-06ce3edf0cff21f07
+  AWSRegionToVPCId: # VPC id in which instance to be launched
+    us-east-1:
+      VPCId: vpc-62d0e11a
+    us-west-2:
+      VPCId: placeholder-create-and-use
+    eu-west-1:
+      VPCId: placeholder-create-and-use
+  AWSRegionToSubnetId: # Private Subnet id in which instance to be launched
+    us-east-1:
+      SubnetId: subnet-ada1f8e6
+    us-west-2:
+      SubnetId: placeholder-create-and-use
+    eu-west-1:
+      SubnetId: placeholder-create-and-use
+Resources:
+  LoadBalancerSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupName: !Sub '${ProductName}-${EnvironmentName}-LBSG'
+      GroupDescription: LB security group for Instance
+      VpcId: !FindInMap [AWSRegionToVPCId, !Ref 'AWS::Region', VPCId]
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '1515'
+          ToPort: '1515'
+          CidrIp: 172.0.0.0/8
+          Description: '-'
+        - IpProtocol: udp
+          FromPort: '1514'
+          ToPort: '1514'
+          CidrIp: 172.0.0.0/8
+          Description: '-'
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: !Ref VpnIP
+          Description: VPN Server
+        - IpProtocol: -1
+          SourceSecurityGroupId: sg-b9ca51cd
+          Description: VPN-Dev-SG-HostSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProductName}-${EnvironmentName}-LBSG'
+        - Key: Business / Service Owner
+          Value: !Ref TeamEmail
+        - Key: ProductID
+          Value: !Ref ProductName
+        - Key: Environment
+          Value: !Sub '${EnvironmentName}'
+        - Key: Purpose
+          Value: Network
+        - Key: CreatedBy
+          Value: !Ref CreatorEmail
+
+  InstanceSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    DependsOn: 'LoadBalancerSecurityGroup'
+    Properties:
+      GroupName: !Sub '${ProductName}-${EnvironmentName}-SG'
+      GroupDescription:  Instance security group
+      VpcId: !FindInMap [AWSRegionToVPCId, !Ref 'AWS::Region', VPCId]
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '1515'
+          ToPort: '1515'
+          CidrIp: 172.0.0.0/8
+          Description: '-'
+        - IpProtocol: udp
+          FromPort: '1514'
+          ToPort: '1514'
+          CidrIp: 172.0.0.0/8
+          Description: '-'
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: !Ref VpnIP
+          Description: VPN Server
+        - IpProtocol: tcp
+          FromPort: '443'
+          ToPort: '443'
+          CidrIp: !Ref VpnIP
+          Description: VPN Server
+        - IpProtocol: -1
+          SourceSecurityGroupId: sg-b9ca51cd
+          Description: VPN-Dev-SG-HostSecurityGroup
+        - IpProtocol: tcp
+          FromPort: '443'
+          ToPort: '443'
+          SourceSecurityGroupId: !GetAtt LoadBalancerSecurityGroup.GroupId
+          Description: 'LoadBalancer SG'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProductName}-${EnvironmentName}-SG'
+        - Key: Business / Service Owner
+          Value: !Ref TeamEmail
+        - Key: ProductID
+          Value: !Ref ProductName
+        - Key: Environment
+          Value: !Sub '${EnvironmentName}'
+        - Key: Purpose
+          Value: Network
+        - Key: CreatedBy
+          Value: !Ref CreatorEmail
+
+  Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: !Ref InstanceType
+      SecurityGroupIds:
+        - !GetAtt InstanceSecurityGroup.GroupId
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [AWSRegionToAMI, !Ref 'AWS::Region', AMIID]
+      SubnetId:
+        !FindInMap [AWSRegionToSubnetId, !Ref 'AWS::Region', SubnetId]
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash
+            rpm --import https://packages.wazuh.com/key/GPG-KEY-WAZUH
+            cat > /etc/yum.repos.d/wazuh.repo <<\EOF
+            [wazuh_repo]
+            gpgcheck=1
+            gpgkey=https://packages.wazuh.com/key/GPG-KEY-WAZUH
+            enabled=1
+            name=Wazuh repository
+            baseurl=https://packages.wazuh.com/3.x/yum/
+            protect=1
+            EOF
+
+            yum install -y wazuh-manager
+            curl --silent --location https://rpm.nodesource.com/setup_10.x | bash -
+            yum install -y nodejs
+            yum install -y wazuh-api 
+            wget https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-oss-7.7.0-x86_64.rpm
+            rpm -i filebeat-oss-7.7.0-x86_64.rpm
+
+            yum localinstall -y filebeat-oss-7.7.0-x86_64.rpm
+            curl https://d3g5vo6xdbdb9a.cloudfront.net/yum/opendistroforelasticsearch-artifacts.repo -o /etc/yum.repos.d/opendistroforelasticsearch-artifacts.repo
+            yum install -y java-1.8.0-openjdk-devel
+            yum install -y opendistroforelasticsearch-1.8.0
+            ln -s /usr/lib/jvm/java-1.8.0/lib/tools.jar /usr/share/elasticsearch/lib/
+            yum install -y opendistroforelasticsearch-kibana-1.8.0
+
+            mkdir /etc/elasticsearch/certs
+            cd /etc/elasticsearch/certs
+            openssl genrsa -out root-ca-key.pem 2048
+            openssl req -new -x509 -sha256 -key root-ca-key.pem -out root-ca.pem -subj "/C=US/ST=Washington/L=Seattle/O=Wazuh/CN=localhost" -days 365
+
+            openssl genrsa -out admin-key-temp.pem 2048
+            openssl pkcs8 -inform PEM -outform PEM -in admin-key-temp.pem -topk8 -nocrypt -v1 PBE-SHA1-3DES -out admin-key.pem
+            openssl req -new -key admin-key.pem -out admin.csr -subj "/C=US/ST=Washington/L=Seattle/O=Wazuh/CN=localhost"  -days 365
+            openssl x509 -req -in admin.csr -CA root-ca.pem -CAkey root-ca-key.pem -CAcreateserial -sha256 -out admin.pem   -days 365
+
+            sed -i '/CN=kirk/c\\ \ - CN=localhost,O=Wazuh,L=Seattle,ST=Washington,C=US' /etc/elasticsearch/elasticsearch.yml
+
+            sed -i '/opendistro_security.ssl.transport.pemcert_filepath/c\opendistro_security.ssl.transport.pemcert_filepath: /etc/elasticsearch/certs/admin.pem' /etc/elasticsearch/elasticsearch.yml
+            sed -i '/opendistro_security.ssl.transport.pemkey_filepath/c\opendistro_security.ssl.transport.pemkey_filepath: /etc/elasticsearch/certs/admin-key.pem' /etc/elasticsearch/elasticsearch.yml
+            sed -i '/opendistro_security.ssl.transport.pemtrustedcas_filepath/c\opendistro_security.ssl.transport.pemtrustedcas_filepath: /etc/elasticsearch/certs/root-ca.pem' /etc/elasticsearch/elasticsearch.yml
+            sed -i '/opendistro_security.ssl.http.pemcert_filepath/c\opendistro_security.ssl.http.pemcert_filepath: /etc/elasticsearch/certs/admin.pem' /etc/elasticsearch/elasticsearch.yml
+            sed -i '/opendistro_security.ssl.http.pemkey_filepath/c\opendistro_security.ssl.http.pemkey_filepath: /etc/elasticsearch/certs/admin-key.pem' /etc/elasticsearch/elasticsearch.yml
+            sed -i '/opendistro_security.ssl.http.pemtrustedcas_filepath/c\opendistro_security.ssl.http.pemtrustedcas_filepath: /etc/elasticsearch/certs/root-ca.pem' /etc/elasticsearch/elasticsearch.yml
+            sed -i '/opendistro_security.allow_unsafe_democertificates/c\opendistro_security.allow_unsafe_democertificates: false' /etc/elasticsearch/elasticsearch.yml
+
+            grep -A1 opendistro /etc/elasticsearch/elasticsearch.yml
+
+            mkdir -p /tmp/elasticsearch/demo-certs
+            mv /etc/elasticsearch/*.pem  /tmp/elasticsearch/demo-certs/
+
+            sed -i '/-Xms1g/c\-Xms8g' /etc/elasticsearch/jvm.options
+            sed -i '/-Xmx1g/c\-Xmx8g' /etc/elasticsearch/jvm.options
+
+            systemctl daemon-reload
+            systemctl restart elasticsearch
+             
+            # curl https://localhost:9200 -u ${ToolsUsername}:${ToolsUsername} --insecure
+
+            cd /usr/share/elasticsearch/plugins/opendistro_security/tools
+            chmod +x hash.sh
+            HASHED_PASS=`./hash.sh -p ${ToolsPassword} | sed -n '2 p'`
+            echo $HASHED_PASS
+
+            cd ../securityconfig
+
+            #head -30 internal_users.yml  --take a backup of this file
+            adm_replace_pass=`grep -A1 ${ToolsUsername}: internal_users.yml | tail -1 | cut -d'"' -f2`
+            sed -i "s#$adm_replace_pass#$HASHED_PASS#" internal_users.yml
+            grep -A1 ${ToolsUsername}: internal_users.yml
+
+            cd ../tools
+            sed -i 's/#kibana:/kibana:/' /usr/share/elasticsearch/plugins/opendistro_security/securityconfig/config.yml
+            sed -i "s/#server_username: kibanaserver/\ \ server_username: ${ToolsUsername}/" /usr/share/elasticsearch/plugins/opendistro_security/securityconfig/config.yml
+            ./securityadmin.sh \
+              -cd ../securityconfig/ \
+              -icl -nhnv \
+              -cacert /etc/elasticsearch/certs/root-ca.pem \
+              -cert /etc/elasticsearch/certs/admin.pem \
+              -key /etc/elasticsearch/certs/admin-key.pem
+
+            # curl https://localhost:9200 -u ${ToolsUsername}:${ToolsPassword} --insecure
+
+            systemctl stop elasticsearch
+            mkdir -p /etc/filebeat/certs
+
+            # Download required config
+            curl -so /etc/filebeat/filebeat.yml https://raw.githubusercontent.com/wazuh/wazuh/v3.13.0/extensions/filebeat/7.x/filebeat.yml
+            chmod go+r /etc/filebeat/filebeat.yml
+
+            # Copy all certificates from /etc/elasticsearch/certs to /etc/filebeat/certs**
+            mkdir -p /etc/filebeat/certs/
+            cp -r /etc/elasticsearch/certs/* /etc/filebeat/certs
+            ll /etc/filebeat/certs
+
+            curl -so /etc/filebeat/wazuh-template.json https://raw.githubusercontent.com/wazuh/wazuh/v3.13.0/extensions/elasticsearch/7.x/wazuh-template.json
+            chmod go+r /etc/filebeat/wazuh-template.json
+
+            curl -s https://packages.wazuh.com/3.x/filebeat/wazuh-filebeat-0.1.tar.gz | sudo tar -xvz -C /usr/share/filebeat/module
+
+            sed -i "/output.elasticsearch.hosts:/c\output.elasticsearch.hosts: ['https://localhost:9200']" /etc/filebeat/filebeat.yml
+
+            cat >> /etc/filebeat/filebeat.yml <<EOF
+            output.elasticsearch.username: "${ToolsUsername}"
+            output.elasticsearch.password: "${ToolsPassword}"
+            output.elasticsearch.ssl.certificate: "/etc/filebeat/certs/admin.pem"
+            output.elasticsearch.ssl.key: "/etc/filebeat/certs/admin-key.pem"
+            output.elasticsearch.ssl.certificate_authorities: "/etc/filebeat/certs/root-ca.pem"
+            EOF
+
+            grep -i output.elasticsearch /etc/filebeat/filebeat.yml
+
+            # sed -i '/opendistro_security.allow_unsafe_democertificates/c\opendistro_security.allow_unsafe_democertificates: true' /etc/elasticsearch/elasticsearch.yml
+            # curl https://localhost:55000 -u foo:bar -k
+
+            # Configure Wazuh API
+            cd /var/ossec/api/configuration/auth
+            node htpasswd -b -Bc -C 10 user ${ToolsUsername} ${ToolsPassword}
+
+            # Restart the api
+            systemctl restart wazuh-api
+
+            # curl https://localhost:55000 -u ${ToolsUsername} -k  --> enter ES_PASS vlue
+
+            # Configure kibana
+            cd /usr/share/kibana/
+            sudo -u kibana bin/kibana-plugin install https://packages.wazuh.com/wazuhapp/wazuhapp-3.13.0_7.7.0.zip
+
+            mkdir /etc/kibana/certs
+            cp /etc/elasticsearch/certs/* /etc/kibana/certs/ 
+            cd /etc/kibana/certs
+            chown kibana:kibana * 
+            cd ..
+            sed -i '/elastic/d' /etc/kibana/kibana.yml
+
+            cat >> /etc/kibana/kibana.yml <<EOF
+
+            server.host: "0.0.0.0"
+            server.ssl.certificate: "/etc/kibana/certs/admin.pem"
+            server.ssl.key: "/etc/kibana/certs/admin-key.pem"
+            server.ssl.certificateAuthorities: "/etc/kibana/certs/root-ca.pem"
+            server.port: 443
+            elasticsearch.hosts: https://localhost:9200
+            elasticsearch.ssl.verificationMode: none
+            elasticsearch.ssl.certificateAuthorities: "/etc/kibana/certs/root-ca.pem"
+            elasticsearch.ssl.certificate: "/etc/kibana/certs/admin.pem"
+            elasticsearch.ssl.key: "/etc/kibana/certs/admin-key.pem"
+            elasticsearch.username: ${ToolsUsername}
+            elasticsearch.password: ${ToolsPassword}
+            elasticsearch.requestHeadersWhitelist: ["securitytenant","Authorization"]
+            opendistro_security.allow_client_certificates: true 
+            EOF
+
+            setcap 'CAP_NET_BIND_SERVICE=+eip' /usr/share/kibana/node/bin/node
+            systemctl daemon-reload
+            systemctl restart wazuh-api
+            systemctl restart wazuh-manager
+            service elasticsearch restart
+            service filebeat restart
+            service kibana restart
+
+            while [ ! -f /usr/share/kibana/optimize/wazuh/config/wazuh.yml ]; do sleep 5; done
+
+            sudo -u kibana sed -i '/checks.pattern/c\checks.pattern: false'  /usr/share/kibana/optimize/wazuh/config/wazuh.yml
+            sudo -u kibana sed -i '/checks.template/c\checks.template: false'  /usr/share/kibana/optimize/wazuh/config/wazuh.yml
+            sudo -u kibana sed -i "s/foo/${ToolsUsername}/; s/bar/${ToolsPassword}/" /usr/share/kibana/optimize/wazuh/config/wazuh.yml
+
+            service elasticsearch restart
+            service filebeat restart
+            service kibana restart
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProductName}-${EnvironmentName}'
+        - Key: Business / Service Owner
+          Value: !Ref TeamEmail
+        - Key: ProductID
+          Value: !Ref ProductName
+        - Key: Environment
+          Value: !Sub '${EnvironmentName}'
+        - Key: Purpose
+          Value: Reporting
+        - Key: CreatedBy
+          Value: !Ref CreatorEmail
+        - Key: NewRelicInfraAgent
+          Value: 'True'
+        # - Key: SumoLogic
+        #   Value: 'True'
+        # - Key: Sumo_LogFilePath
+        #   Value: '/var/log/elasticsearch/elasticsearch.log,/var/log/kibana/kibana.stderr,/var/ossec/logs/*'
+        # - Key: Sumo_SourceCategory
+        #   Value: !Sub '${EnvironmentName}/${ProductName}/Service/Elasticsearch,${EnvironmentName}/${ProductName}/Service/Kibana/Error,${EnvironmentName}/${ProductName}/Service/Wazuh'
+        # - Key: Sumo_SourceName
+        #   Value: 'ElasticSearch-Logs,Kibana-Error-Logs,Wazuh-Logs'
+  HighCPUAlarm:
+    Type: AWS::CloudWatch::Alarm
+    DependsOn: AlarmSNSTopic
+    Properties:
+      AlarmDescription: !Sub 'CPU alarm for ${ProductName}-${EnvironmentName}'
+      AlarmName: !Sub ${ProductName}-${EnvironmentName}-Instance-HighCPUUtilizationAlarm
+      AlarmActions:
+        - !Ref AlarmSNSTopic
+      MetricName: CPUUtilization
+      Namespace: AWS/EC2
+      Statistic: Average
+      Period: '60'
+      EvaluationPeriods: '3'
+      Threshold: '90'
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref Instance
+
+  HighMemoryAlarm:
+    Type: AWS::CloudWatch::Alarm
+    DependsOn: AlarmSNSTopic
+    Properties:
+      AlarmDescription: !Sub 'High Memory utilization alarm for ${ProductName}-${EnvironmentName}'
+      AlarmName: !Sub ${ProductName}-${EnvironmentName}-Instance-HighMemoryUtilizationAlarm
+      AlarmActions:
+        - !Ref AlarmSNSTopic
+      MetricName: MemUtilization
+      Namespace: AWS/EC2
+      Statistic: Average
+      Period: '60'
+      EvaluationPeriods: '3'
+      Threshold: '90'
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref Instance
+
+  AlarmSNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        DisplayName: Custom Email Integration
+        Subscription:
+        - Endpoint: !Sub ${TeamEmail}
+          Protocol: "email"
+
+  LoadBalancer:
+    Type: 'AWS::ElasticLoadBalancing::LoadBalancer'
+    Properties:
+      Scheme: 'internal'
+      Subnets:
+        - !FindInMap [AWSRegionToSubnetId, !Ref 'AWS::Region', SubnetId]
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Instances:
+        - !Ref Instance
+      Listeners:
+        - LoadBalancerPort: '1514'
+          InstancePort: '1514'
+          Protocol: TCP
+        - LoadBalancerPort: '80'
+          InstancePort: '443'
+          Protocol: HTTP
+      HealthCheck:
+        HealthyThreshold: '2'
+        Interval: '5'
+        Target: 'TCP:443'
+        Timeout: '2'
+        UnhealthyThreshold: '2'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProductName}-${EnvironmentName}-LB'
+        - Key: Business / Service Owner
+          Value: !Ref TeamEmail
+        - Key: Purpose
+          Value: Network
+        - Key: ProductID
+          Value: !Ref ProductName
+        - Key: Environment
+          Value: !Sub '${EnvironmentName}'
+
+Outputs:
+  LoadBalancerURL:
+    Description: LB URL
+    Value: !GetAtt LoadBalancer.DNSName
