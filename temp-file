@@ -1,0 +1,10 @@
+aws cloudformation deploy \
+                                --template-file ${CF_TEMPLATE_PATH} \
+                                --stack-name ${stack_name} --region ${DEPLOY_REGION} \
+                                --tags  Name="${stack_name} CF Stack" \
+                                            "Business / Service Owner"=Digital-DevOps@aljazeera.net \
+                                            Purpose=Network \
+                                            ProductID=${stack_name} \
+                                            Environment=Shared \
+                                            CreatedBy=Vijayagirip@aljazeera.net \
+                                --parameter-overrides ToolsUsername="$WAZUH_ADMIN_USERNAME" ToolsPassword="$WAZUH_ADMIN_PASSWORD"
