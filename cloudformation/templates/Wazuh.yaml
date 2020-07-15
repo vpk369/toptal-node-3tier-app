@@ -303,9 +303,9 @@ Resources:
             mkdir -p /tmp/elasticsearch/demo-certs
             mv /etc/elasticsearch/*.pem  /tmp/elasticsearch/demo-certs/
 
-            # Ensure to choose gp size half of the memory. So for minimum of 8gb ram we need to choose 4bg
+            # Ensure to choose GB size half of the memory. So for minimum of 8gb ram we need to choose 4bg
             sed -i '/^\-Xms/c\-Xms4g' /etc/elasticsearch/jvm.options
-            sed -i '/^\Xmx/c\-Xmx4g' /etc/elasticsearch/jvm.options
+            sed -i '/^\-Xmx/c\-Xmx4g' /etc/elasticsearch/jvm.options
 
             systemctl daemon-reload
             systemctl restart elasticsearch
