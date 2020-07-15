@@ -346,7 +346,7 @@ Resources:
             # Copy all certificates from /etc/elasticsearch/certs to /etc/filebeat/certs**
             mkdir -p /etc/filebeat/certs/
             cp -r /etc/elasticsearch/certs/* /etc/filebeat/certs
-            ll /etc/filebeat/certs
+            ls -la /etc/filebeat/certs
 
             curl -so /etc/filebeat/wazuh-template.json https://raw.githubusercontent.com/wazuh/wazuh/v3.13.0/extensions/elasticsearch/7.x/wazuh-template.json
             chmod go+r /etc/filebeat/wazuh-template.json
@@ -420,6 +420,9 @@ Resources:
             sudo -u kibana sed -i '/checks.template/c\checks.template: false'  /usr/share/kibana/optimize/wazuh/config/wazuh.yml
             sudo -u kibana sed -i "s/foo/${ToolsUsername}/; s/bar/${ToolsPassword}/" /usr/share/kibana/optimize/wazuh/config/wazuh.yml
 
+            systemctl enable elasticsearch.service
+            systemctl enable filebeat.service
+            systemctl enable kibana.service
             service elasticsearch restart
             service filebeat restart
             service kibana restart
