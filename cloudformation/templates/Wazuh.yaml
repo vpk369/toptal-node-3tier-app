@@ -1,6 +1,6 @@
 Description: >-
   This template creates a Load Balancer which will forward requests to an
-  instance in the stack region
+  instance in the stack region (use atleast 8gm RAM ex: t3a.large)
 
 Parameters:
   EnvironmentName:
@@ -26,12 +26,12 @@ Parameters:
   KeyName:
     Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
     Type: String
-    Default: Generic_CSE_Tooling
+    Default: toptal-screening
     ConstraintDescription: Must be the name of an existing EC2 KeyPair.
   InstanceType:
     Description: EC2 instance type
     Type: String
-    Default: m5.xlarge
+    Default: 't3.large'
     AllowedValues:
       - c5n.xlarge
       - c3.2xlarge
@@ -58,6 +58,7 @@ Parameters:
       - m5dn.xlarge
       - m5n.xlarge
       - m6g.xlarge
+      - m6g.large
       - r5.large
       - r5a.large
       - r5ad.large
@@ -70,19 +71,24 @@ Parameters:
       - t3a.xlarge
       - z1d.large
       - m2.xlarge
+      - t3.large
     ConstraintDescription: must be a valid EC2 instance type.
   CreatorEmail:
     Description: Creator e-mail of this stack
     Type: String
-    Default: 'Vijayagirip@aljazeera.net'
+    Default: 'vpk369@gmail.com'
   TeamEmail:
     Description: Team e-mail to send alerts to
     Type: String
-    Default: 'Digital-Devops@aljazeera.net'
+    Default: 'vpk369@gmail.com'
   VpnIP:
     Description: Vpn IP address
     Type: String
     Default: '34.238.5.53/32'
+  NetworkStackName:
+    Description: Name of the Network stack. This is used in exporting vpc values from that stack.
+    Type: String
+    Default: Toptal-PROD-Network
 Mappings:
   AWSRegionToAMI: # Ami Id in specific to be used for launching instance
     us-east-1:
@@ -93,18 +99,18 @@ Mappings:
       AMIID: ami-06ce3edf0cff21f07
   AWSRegionToVPCId: # VPC id in which instance to be launched
     us-east-1:
-      VPCId: vpc-62d0e11a
+      VPCId: vpc-04d3e3e255f99cffa
     us-west-2:
-      VPCId: placeholder-create-and-use
+      VPCId: vpc-xxxx
     eu-west-1:
-      VPCId: placeholder-create-and-use
-  AWSRegionToSubnetId: # Private Subnet id in which instance to be launched
+      VPCId: vpc-xxxx
+  AWSRegionToSubnetId: # Public Subnet id in which instance to be launched. Generally we should choose private subnet if we have a VPN
     us-east-1:
-      SubnetId: subnet-ada1f8e6
+      SubnetId: subnet-0212d244d080f0c6e
     us-west-2:
-      SubnetId: placeholder-create-and-use
+      SubnetId: subnet-xxxx
     eu-west-1:
-      SubnetId: placeholder-create-and-use
+      SubnetId: subnet-xxxx
 Resources:
   LoadBalancerSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
@@ -128,9 +134,9 @@ Resources:
           ToPort: '80'
           CidrIp: !Ref VpnIP
           Description: VPN Server
-        - IpProtocol: -1
-          SourceSecurityGroupId: sg-b9ca51cd
-          Description: VPN-Dev-SG-HostSecurityGroup
+        # - IpProtocol: -1
+        #   SourceSecurityGroupId: sg-xxx
+        #   Description: VPN-Dev-SG-HostSecurityGroup
       Tags:
         - Key: Name
           Value: !Sub '${ProductName}-${EnvironmentName}-LBSG'
@@ -173,14 +179,18 @@ Resources:
           ToPort: '443'
           CidrIp: !Ref VpnIP
           Description: VPN Server
-        - IpProtocol: -1
-          SourceSecurityGroupId: sg-b9ca51cd
-          Description: VPN-Dev-SG-HostSecurityGroup
+        # - IpProtocol: -1
+        #   SourceSecurityGroupId: sg-xxx
+        #   Description: VPN-Dev-SG-HostSecurityGroup
         - IpProtocol: tcp
           FromPort: '443'
           ToPort: '443'
           SourceSecurityGroupId: !GetAtt LoadBalancerSecurityGroup.GroupId
           Description: 'LoadBalancer SG'
+        - IpProtocol: tcp
+          FromPort: '443'
+          ToPort: '443'
+          CidrIp: '183.83.166.17/32'
       Tags:
         - Key: Name
           Value: !Sub '${ProductName}-${EnvironmentName}-SG'
@@ -195,16 +205,50 @@ Resources:
         - Key: CreatedBy
           Value: !Ref CreatorEmail
 
+  AppRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+
+  AppInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+      - !Ref AppRole
+
   Instance:
     Type: 'AWS::EC2::Instance'
     Properties:
       InstanceType: !Ref InstanceType
-      SecurityGroupIds:
-        - !GetAtt InstanceSecurityGroup.GroupId
+      NetworkInterfaces:
+        - 
+          AssociatePublicIpAddress: 'True'
+          DeviceIndex: '0'
+          SubnetId:
+            !FindInMap [AWSRegionToSubnetId, !Ref 'AWS::Region', SubnetId]
+          GroupSet:
+            - !GetAtt InstanceSecurityGroup.GroupId
+      IamInstanceProfile: !Ref AppInstanceProfile
+      # SecurityGroupIds:
+      #   - !GetAtt InstanceSecurityGroup.GroupId
       KeyName: !Ref KeyName
       ImageId: !FindInMap [AWSRegionToAMI, !Ref 'AWS::Region', AMIID]
-      SubnetId:
-        !FindInMap [AWSRegionToSubnetId, !Ref 'AWS::Region', SubnetId]
+
       UserData:
         Fn::Base64:
           !Sub |
@@ -259,8 +303,9 @@ Resources:
             mkdir -p /tmp/elasticsearch/demo-certs
             mv /etc/elasticsearch/*.pem  /tmp/elasticsearch/demo-certs/
 
-            sed -i '/-Xms1g/c\-Xms8g' /etc/elasticsearch/jvm.options
-            sed -i '/-Xmx1g/c\-Xmx8g' /etc/elasticsearch/jvm.options
+            # Ensure to choose gp size half of the memory. So for minimum of 8gb ram we need to choose 4bg
+            sed -i '/^\-Xms/c\-Xms4g' /etc/elasticsearch/jvm.options
+            sed -i '/^\Xmx/c\-Xmx4g' /etc/elasticsearch/jvm.options
 
             systemctl daemon-reload
             systemctl restart elasticsearch
@@ -401,88 +446,88 @@ Resources:
         #   Value: !Sub '${EnvironmentName}/${ProductName}/Service/Elasticsearch,${EnvironmentName}/${ProductName}/Service/Kibana/Error,${EnvironmentName}/${ProductName}/Service/Wazuh'
         # - Key: Sumo_SourceName
         #   Value: 'ElasticSearch-Logs,Kibana-Error-Logs,Wazuh-Logs'
-  HighCPUAlarm:
-    Type: AWS::CloudWatch::Alarm
-    DependsOn: AlarmSNSTopic
-    Properties:
-      AlarmDescription: !Sub 'CPU alarm for ${ProductName}-${EnvironmentName}'
-      AlarmName: !Sub ${ProductName}-${EnvironmentName}-Instance-HighCPUUtilizationAlarm
-      AlarmActions:
-        - !Ref AlarmSNSTopic
-      MetricName: CPUUtilization
-      Namespace: AWS/EC2
-      Statistic: Average
-      Period: '60'
-      EvaluationPeriods: '3'
-      Threshold: '90'
-      ComparisonOperator: GreaterThanThreshold
-      Dimensions:
-        - Name: InstanceId
-          Value: !Ref Instance
+  # HighCPUAlarm:
+  #   Type: AWS::CloudWatch::Alarm
+  #   DependsOn: AlarmSNSTopic
+  #   Properties:
+  #     AlarmDescription: !Sub 'CPU alarm for ${ProductName}-${EnvironmentName}'
+  #     AlarmName: !Sub ${ProductName}-${EnvironmentName}-Instance-HighCPUUtilizationAlarm
+  #     AlarmActions:
+  #       - !Ref AlarmSNSTopic
+  #     MetricName: CPUUtilization
+  #     Namespace: AWS/EC2
+  #     Statistic: Average
+  #     Period: '60'
+  #     EvaluationPeriods: '3'
+  #     Threshold: '90'
+  #     ComparisonOperator: GreaterThanThreshold
+  #     Dimensions:
+  #       - Name: InstanceId
+  #         Value: !Ref Instance
 
-  HighMemoryAlarm:
-    Type: AWS::CloudWatch::Alarm
-    DependsOn: AlarmSNSTopic
-    Properties:
-      AlarmDescription: !Sub 'High Memory utilization alarm for ${ProductName}-${EnvironmentName}'
-      AlarmName: !Sub ${ProductName}-${EnvironmentName}-Instance-HighMemoryUtilizationAlarm
-      AlarmActions:
-        - !Ref AlarmSNSTopic
-      MetricName: MemUtilization
-      Namespace: AWS/EC2
-      Statistic: Average
-      Period: '60'
-      EvaluationPeriods: '3'
-      Threshold: '90'
-      ComparisonOperator: GreaterThanThreshold
-      Dimensions:
-        - Name: InstanceId
-          Value: !Ref Instance
+#   HighMemoryAlarm:
+#     Type: AWS::CloudWatch::Alarm
+#     DependsOn: AlarmSNSTopic
+#     Properties:
+#       AlarmDescription: !Sub 'High Memory utilization alarm for ${ProductName}-${EnvironmentName}'
+#       AlarmName: !Sub ${ProductName}-${EnvironmentName}-Instance-HighMemoryUtilizationAlarm
+#       AlarmActions:
+#         - !Ref AlarmSNSTopic
+#       MetricName: MemUtilization
+#       Namespace: AWS/EC2
+#       Statistic: Average
+#       Period: '60'
+#       EvaluationPeriods: '3'
+#       Threshold: '90'
+#       ComparisonOperator: GreaterThanThreshold
+#       Dimensions:
+#         - Name: InstanceId
+#           Value: !Ref Instance
 
-  AlarmSNSTopic:
-      Type: AWS::SNS::Topic
-      Properties:
-        DisplayName: Custom Email Integration
-        Subscription:
-        - Endpoint: !Sub ${TeamEmail}
-          Protocol: "email"
+#   AlarmSNSTopic:
+#       Type: AWS::SNS::Topic
+#       Properties:
+#         DisplayName: Custom Email Integration
+#         Subscription:
+#         - Endpoint: !Sub ${TeamEmail}
+#           Protocol: "email"
 
-  LoadBalancer:
-    Type: 'AWS::ElasticLoadBalancing::LoadBalancer'
-    Properties:
-      Scheme: 'internal'
-      Subnets:
-        - !FindInMap [AWSRegionToSubnetId, !Ref 'AWS::Region', SubnetId]
-      SecurityGroups:
-        - !Ref LoadBalancerSecurityGroup
-      Instances:
-        - !Ref Instance
-      Listeners:
-        - LoadBalancerPort: '1514'
-          InstancePort: '1514'
-          Protocol: TCP
-        - LoadBalancerPort: '80'
-          InstancePort: '443'
-          Protocol: HTTP
-      HealthCheck:
-        HealthyThreshold: '2'
-        Interval: '5'
-        Target: 'TCP:443'
-        Timeout: '2'
-        UnhealthyThreshold: '2'
-      Tags:
-        - Key: Name
-          Value: !Sub '${ProductName}-${EnvironmentName}-LB'
-        - Key: Business / Service Owner
-          Value: !Ref TeamEmail
-        - Key: Purpose
-          Value: Network
-        - Key: ProductID
-          Value: !Ref ProductName
-        - Key: Environment
-          Value: !Sub '${EnvironmentName}'
+#   LoadBalancer:
+#     Type: 'AWS::ElasticLoadBalancing::LoadBalancer'
+#     Properties:
+#       Scheme: 'internet-facing'
+#       Subnets:
+#         - !FindInMap [AWSRegionToSubnetId, !Ref 'AWS::Region', SubnetId]
+#       SecurityGroups:
+#         - !Ref LoadBalancerSecurityGroup
+#       Instances:
+#         - !Ref Instance
+#       Listeners:
+#         - LoadBalancerPort: '1514'
+#           InstancePort: '1514'
+#           Protocol: TCP
+#         - LoadBalancerPort: '80'
+#           InstancePort: '443'
+#           Protocol: HTTP
+#       HealthCheck:
+#         HealthyThreshold: '2'
+#         Interval: '5'
+#         Target: 'TCP:443'
+#         Timeout: '2'
+#         UnhealthyThreshold: '2'
+#       Tags:
+#         - Key: Name
+#           Value: !Sub '${ProductName}-${EnvironmentName}-LB'
+#         - Key: Business / Service Owner
+#           Value: !Ref TeamEmail
+#         - Key: Purpose
+#           Value: Network
+#         - Key: ProductID
+#           Value: !Ref ProductName
+#         - Key: Environment
+#           Value: !Sub '${EnvironmentName}'
 
-Outputs:
-  LoadBalancerURL:
-    Description: LB URL
-    Value: !GetAtt LoadBalancer.DNSName
+# Outputs:
+#   LoadBalancerURL:
+#     Description: LB URL
+#     Value: !GetAtt LoadBalancer.DNSName

@@ -14,13 +14,15 @@ aws cloudformation deploy --template-file templates/security-groups.yaml --stack
 
 aws cloudformation deploy --template-file templates/shared-infra.yaml --stack-name Toptal-PROD-Shared-Infra --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_NAMED_IAM
 
-aws cloudformation deploy --template-file templates/db-stack.yaml --stack-name Toptal-PROD-DB --profile ToptalAdmin --region=$AWS_REGION --parameter-overrides UserPassword=$UserPassword
+#aws cloudformation deploy --template-file templates/db-stack.yaml --stack-name Toptal-PROD-DB --profile ToptalAdmin --region=$AWS_REGION --parameter-overrides UserPassword=$UserPassword
 
-aws cloudformation deploy --template-file templates/api-stack.yaml --stack-name Toptal-PROD-Api --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM
+#aws cloudformation deploy --template-file templates/api-stack.yaml --stack-name Toptal-PROD-Api --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM
 
-aws cloudformation deploy --template-file templates/web-stack.yaml --stack-name Toptal-PROD-Web --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM
+#aws cloudformation deploy --template-file templates/web-stack.yaml --stack-name Toptal-PROD-Web --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM
 
 #aws cloudformation deploy --template-file templates/waf-security.yaml --stack-name Toptal-WAF-Security --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM #give permission to create role
 
+aws cloudformation deploy --template-file templates/Wazuh.yaml --stack-name Toptal-PROD-Wazuh --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_NAMED_IAM --parameter-overrides ToolsUsername=$ToolsUsername ToolsPassword=$ToolsPassword
+
 echo -e "\n\n\nHere are the details of resources:"
-aws cloudformation list-exports --query "Exports[*].{name:Name,value:Value}" --profile ToptalAdmin --region $AWS_REGION --output text
+aws cloudformation list-exports --query "Exports[*].{name:Name,value:Value}" --profile ToptalAdmin --region $AWS_REGION --output text 
