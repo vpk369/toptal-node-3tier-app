@@ -235,19 +235,13 @@ Resources:
     Type: 'AWS::EC2::Instance'
     Properties:
       InstanceType: !Ref InstanceType
-      NetworkInterfaces:
-        - 
-          AssociatePublicIpAddress: 'True'
-          DeviceIndex: '0'
-          SubnetId:
-            !FindInMap [AWSRegionToSubnetId, !Ref 'AWS::Region', SubnetId]
-          GroupSet:
-            - !GetAtt InstanceSecurityGroup.GroupId
       IamInstanceProfile: !Ref AppInstanceProfile
-      # SecurityGroupIds:
-      #   - !GetAtt InstanceSecurityGroup.GroupId
+      SecurityGroupIds:
+        - !GetAtt InstanceSecurityGroup.GroupId
       KeyName: !Ref KeyName
       ImageId: !FindInMap [AWSRegionToAMI, !Ref 'AWS::Region', AMIID]
+      SubnetId:
+        !FindInMap [AWSRegionToSubnetId, !Ref 'AWS::Region', SubnetId]
 
       UserData:
         Fn::Base64:
@@ -420,6 +414,8 @@ Resources:
             sudo -u kibana sed -i '/checks.template/c\checks.template: false'  /usr/share/kibana/optimize/wazuh/config/wazuh.yml
             sudo -u kibana sed -i "s/foo/${ToolsUsername}/; s/bar/${ToolsPassword}/" /usr/share/kibana/optimize/wazuh/config/wazuh.yml
 
+            /var/ossec/bin/ossec-authd
+
             systemctl enable elasticsearch.service
             systemctl enable filebeat.service
             systemctl enable kibana.service
@@ -495,42 +491,42 @@ Resources:
 #         - Endpoint: !Sub ${TeamEmail}
 #           Protocol: "email"
 
-#   LoadBalancer:
-#     Type: 'AWS::ElasticLoadBalancing::LoadBalancer'
-#     Properties:
-#       Scheme: 'internet-facing'
-#       Subnets:
-#         - !FindInMap [AWSRegionToSubnetId, !Ref 'AWS::Region', SubnetId]
-#       SecurityGroups:
-#         - !Ref LoadBalancerSecurityGroup
-#       Instances:
-#         - !Ref Instance
-#       Listeners:
-#         - LoadBalancerPort: '1514'
-#           InstancePort: '1514'
-#           Protocol: TCP
-#         - LoadBalancerPort: '80'
-#           InstancePort: '443'
-#           Protocol: HTTP
-#       HealthCheck:
-#         HealthyThreshold: '2'
-#         Interval: '5'
-#         Target: 'TCP:443'
-#         Timeout: '2'
-#         UnhealthyThreshold: '2'
-#       Tags:
-#         - Key: Name
-#           Value: !Sub '${ProductName}-${EnvironmentName}-LB'
-#         - Key: Business / Service Owner
-#           Value: !Ref TeamEmail
-#         - Key: Purpose
-#           Value: Network
-#         - Key: ProductID
-#           Value: !Ref ProductName
-#         - Key: Environment
-#           Value: !Sub '${EnvironmentName}'
+  LoadBalancer:
+    Type: 'AWS::ElasticLoadBalancing::LoadBalancer'
+    Properties:
+      Scheme: 'internet-facing'
+      Subnets:
+        - !FindInMap [AWSRegionToSubnetId, !Ref 'AWS::Region', SubnetId]
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Instances:
+        - !Ref Instance
+      Listeners:
+        - LoadBalancerPort: '1514'
+          InstancePort: '1514'
+          Protocol: TCP
+        - LoadBalancerPort: '80'
+          InstancePort: '443'
+          Protocol: HTTP
+      HealthCheck:
+        HealthyThreshold: '2'
+        Interval: '5'
+        Target: 'TCP:443'
+        Timeout: '2'
+        UnhealthyThreshold: '2'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProductName}-${EnvironmentName}-LB'
+        - Key: Business / Service Owner
+          Value: !Ref TeamEmail
+        - Key: Purpose
+          Value: Network
+        - Key: ProductID
+          Value: !Ref ProductName
+        - Key: Environment
+          Value: !Sub '${EnvironmentName}'
 
-# Outputs:
-#   LoadBalancerURL:
-#     Description: LB URL
-#     Value: !GetAtt LoadBalancer.DNSName
+Outputs:
+  LoadBalancerURL:
+    Description: LB URL
+    Value: !GetAtt LoadBalancer.DNSName
