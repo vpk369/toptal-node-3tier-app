@@ -152,6 +152,23 @@ Loadbalancer is set as internal to block any unwanted external access.
 Currently set to listen ports 443 and 1514. 
 
 1514 port is used by wazuh agent communications with manager.
+```
+cat > /etc/yum.repos.d/wazuh.repo <<\EOF
+[wazuh_repo]
+gpgcheck=1
+gpgkey=https://packages.wazuh.com/key/GPG-KEY-WAZUH
+enabled=1
+name=Wazuh repository
+baseurl=https://packages.wazuh.com/3.x/yum/
+protect=1
+EOF
+
+yum install wazuh-agent
+sed -i 's/MANAGER_IP/172.24.34.88/' /var/ossec/etc/ossec.conf
+/var/ossec/bin/agent-auth
+/var/ossec/bin/agent-auth -m 172.24.34.88
+systemctl restart wazuh-agent
+```
 
 # References:
 

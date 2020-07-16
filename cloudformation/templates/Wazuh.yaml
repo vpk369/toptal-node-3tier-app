@@ -111,6 +111,13 @@ Mappings:
       SubnetId: subnet-xxxx
     eu-west-1:
       SubnetId: subnet-xxxx
+  AWSRegionToSubnetIdForLB: # Public Subnet id in which loadbalancer be launched.
+    us-east-1:
+      SubnetId: subnet-0212d244d080f0c6e
+    us-west-2:
+      SubnetId: subnet-xxxx
+    eu-west-1:
+      SubnetId: subnet-xxxx
 Resources:
   LoadBalancerSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
@@ -504,7 +511,7 @@ Resources:
     Properties:
       Scheme: 'internet-facing'
       Subnets:
-        - !FindInMap [AWSRegionToSubnetId, !Ref 'AWS::Region', SubnetId]
+        - !FindInMap [AWSRegionToSubnetIdForLB, !Ref 'AWS::Region', SubnetId]
       SecurityGroups:
         - !Ref LoadBalancerSecurityGroup
       Instances:
