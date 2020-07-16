@@ -104,9 +104,9 @@ Mappings:
       VPCId: vpc-xxxx
     eu-west-1:
       VPCId: vpc-xxxx
-  AWSRegionToSubnetId: # Public Subnet id in which instance to be launched. Generally we should choose private subnet if we have a VPN
+  AWSRegionToSubnetId: # Private Subnet id in which instance to be launched.
     us-east-1:
-      SubnetId: subnet-0212d244d080f0c6e
+      SubnetId: subnet-00432af58261b5dd5
     us-west-2:
       SubnetId: subnet-xxxx
     eu-west-1:
@@ -122,12 +122,16 @@ Resources:
         - IpProtocol: tcp
           FromPort: '1515'
           ToPort: '1515'
-          CidrIp: 172.0.0.0/8
+          CidrIp:
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           Description: '-'
         - IpProtocol: udp
           FromPort: '1514'
           ToPort: '1514'
-          CidrIp: 172.0.0.0/8
+          CidrIp:
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           Description: '-'
         - IpProtocol: tcp
           FromPort: '80'
@@ -162,12 +166,16 @@ Resources:
         - IpProtocol: tcp
           FromPort: '1515'
           ToPort: '1515'
-          CidrIp: 172.0.0.0/8
+          CidrIp:
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           Description: '-'
         - IpProtocol: udp
           FromPort: '1514'
           ToPort: '1514'
-          CidrIp: 172.0.0.0/8
+          CidrIp:
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
           Description: '-'
         - IpProtocol: tcp
           FromPort: '22'
