@@ -1,7 +1,7 @@
 # image: node:latest
 
 stages:
-  ## - test
+  - test-web
   - docker-build-push
   - aws-deploy
 
@@ -10,9 +10,9 @@ cache:
       - api/node_modules/
       - web/node_modules/
 
-# testing:
-#   stage: test
-#   script: npm test
+testing:
+  stage: test-web
+  script: npm test
 
 docker-build-push:
   stage: docker-build-push
