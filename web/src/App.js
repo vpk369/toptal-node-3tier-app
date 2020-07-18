@@ -2,10 +2,10 @@ import React from 'react';
 
 class myComponent extends React.Component {
   componentDidMount() {
-    const apiUrl = 'https://api.github.com/users/hacktivist123/repos';
+    const apiUrl = process.env.API_HOST + '/api/status';
     fetch(apiUrl)
       .then((response) => response.json())
-      .then((data) => console.log('This is your data', data));
+      .then((data) => console.log('This is your api status: ', data));
   }
   render() {
     return <h1>REST API call with REACT, Check the Browser Console for Output. </h1>;

@@ -4,6 +4,7 @@ EB_CONFIG_DIR='.elasticbeanstalk'
 EB_EXT_DIR='.ebextensions'
 SSH_KEY_NAME='toptal-screening'
 PORT=80
+ELK_STACK_IP='12.34.56.78'
 
 SECRETS_API_EB='PROD/Toptal/ApiEB'
 secrets_api_eb_file='./secrets_api_eb.json'
@@ -21,6 +22,7 @@ sed -i "s#%EB_WEB_APP_NAME%#${EB_WEB_APP_NAME}#g" $EB_CONFIG_DIR/config.yml
 sed -i "s#%SSH_KEY_NAME%#${SSH_KEY_NAME}#g" $EB_CONFIG_DIR/config.yml
 sed -i "s#%AWS_REGION%#${AWS_REGION}#g" $EB_CONFIG_DIR/config.yml
 sed -i "s#%SECURITY_GROUP%#${VPN_SG}#g" $EB_EXT_DIR/02-launch.config
+sed -i "s#%ELK_STACK_IP%#${ELK_STACK_IP}#g" $EB_EXT_DIR/03-filebeat.config
 
 sed -i "s#%EB_API_APP_URL%#${EB_API_APP_URL}#g; s#%PORT%#${PORT}#g" ./entrypoint.sh
 }
@@ -31,6 +33,7 @@ sed -i "s#%EB_API_APP_NAME%#${EB_API_APP_NAME}#g" $EB_CONFIG_DIR/config.yml
 sed -i "s#%SSH_KEY_NAME%#${SSH_KEY_NAME}#g" $EB_CONFIG_DIR/config.yml
 sed -i "s#%AWS_REGION%#${AWS_REGION}#g" $EB_CONFIG_DIR/config.yml
 sed -i "s#%SECURITY_GROUP%#${VPN_SG}#g" $EB_EXT_DIR/02-launch.config
+sed -i "s#%ELK_STACK_IP%#${ELK_STACK_IP}#g" $EB_EXT_DIR/03-filebeat.config
 
 sed -i "s#%CONN_STRING%#${CONN_STRING}#g; s#%PORT%#${PORT}#g" ./entrypoint.sh
 }
