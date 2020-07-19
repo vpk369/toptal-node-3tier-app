@@ -207,5 +207,6 @@ https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.logging.ht
 https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/ebextensions.html
 https://github.com/awsdocs/elastic-beanstalk-samples/blob/master/configuration-files/aws-provided/instance-configuration/logs-streamtocloudwatch-linux.config
 https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/command-options-general.html
+https://www.elastic.co/guide/en/beats/metricbeat/6.8/command-line-options.html
 ```
 
