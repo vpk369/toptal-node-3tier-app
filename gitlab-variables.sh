@@ -23,6 +23,7 @@ sed -i "s#%SSH_KEY_NAME%#${SSH_KEY_NAME}#g" $EB_CONFIG_DIR/config.yml
 sed -i "s#%AWS_REGION%#${AWS_REGION}#g" $EB_CONFIG_DIR/config.yml
 sed -i "s#%SECURITY_GROUP%#${VPN_SG}#g" $EB_EXT_DIR/02-launch.config
 sed -i "s#%ELK_STACK_IP%#${ELK_STACK_IP}#g" $EB_EXT_DIR/03-filebeat.config
+sed -i "s#%ELK_STACK_IP%#${ELK_STACK_IP}#g" $EB_EXT_DIR/04-metricbeat.config
 
 sed -i "s#%EB_API_APP_URL%#${EB_API_APP_URL}#g; s#%PORT%#${PORT}#g" ./entrypoint.sh
 }
@@ -34,6 +35,7 @@ sed -i "s#%SSH_KEY_NAME%#${SSH_KEY_NAME}#g" $EB_CONFIG_DIR/config.yml
 sed -i "s#%AWS_REGION%#${AWS_REGION}#g" $EB_CONFIG_DIR/config.yml
 sed -i "s#%SECURITY_GROUP%#${VPN_SG}#g" $EB_EXT_DIR/02-launch.config
 sed -i "s#%ELK_STACK_IP%#${ELK_STACK_IP}#g" $EB_EXT_DIR/03-filebeat.config
+sed -i "s#%ELK_STACK_IP%#${ELK_STACK_IP}#g" $EB_EXT_DIR/04-metricbeat.config
 
 sed -i "s#%CONN_STRING%#${CONN_STRING}#g; s#%PORT%#${PORT}#g" ./entrypoint.sh
 }
