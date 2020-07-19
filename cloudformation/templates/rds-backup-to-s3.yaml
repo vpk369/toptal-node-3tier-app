@@ -1,0 +1,291 @@
+Description: >
+    RDS-Backup-To-S3 - This template to backup Database in Virginia region to S3 on a schedule at 11pm UTC every day
+
+Parameters:
+  BackupLambdaName:
+    Description: Name of the Lambda function for RDS backup
+    Type: String
+    Default: 'RDSBackup'
+
+  BackupLambdaEC2SubnetId:
+    Description: Subnet ID where the backup lambda need to launch EC2 instance for taking RDS backup
+    Type: String
+    Default: 'subnet-0bd9acef8fd20576b'
+
+  BackupLambdaEC2SG:
+    Description: Security Group ID for EC2 instance for taking RDS backup
+    Type: String
+    Default: 'sg-050a65d8f75a3d47c'
+
+  BackupLambdaEC2Key:
+    Description: Key for EC2 instance for taking RDS backup
+    Type: String
+    Default: 'Doc-Ireland'
+
+  RDSDatabaseHost:
+    Description: Source RDS Id in us-east-1 region from which we need to take backup to S3
+    Type: String
+    Default: 'rds-endpint'
+
+  RDSDatabaseUsername:
+    Description: Source RDS DB Username
+    Type: String
+    Default: 'rds-endpint'
+    NoEcho: True
+
+  RDSDatabasePassword:
+    Description: Source RDS DB Password
+    Type: String
+    Default: 'rds-endpint'
+    NoEcho: True
+
+  RDSDatabaseName:
+    Description: Name of db to backup
+    Type: String
+    Default: 'toptal-db'
+
+  EnvName:
+    Description: Environment name for tagging
+    Type: String
+    Default: 'PROD'
+
+  ProductName:
+    Description: A Product name that will be prefixed to resource names
+    Type: String
+    AllowedValues: 
+      - Toptal
+    Default: 'Toptal'
+
+  BucketName:
+    Description: S3 bucket name for taking backup
+    Type: String
+    Default: 'toptal-prod'
+
+  BucketFolderPath:
+    Description: S3 bucket name folder path for saving Prod RDS Backups
+    Type: String
+    Default: 'prod/rds_backups'
+
+Resources:
+    # IAM resources
+    RDSBackupRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        AssumeRolePolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Principal:
+                Service:
+                  - ec2.amazonaws.com
+                  - lambda.amazonaws.com
+              Action:
+                - sts:AssumeRole
+
+    RDSBackupPolicies:
+      Type: AWS::IAM::Policy
+      Properties:
+        PolicyName: !Sub ${ProductName}-${EnvName}-S3-Read-Write
+        Roles:
+        - !Ref RDSBackupRole
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - s3:ListBucket
+                - s3:ListObjects
+                - s3:PutObject
+                - s3:GetObject
+              Resource:
+                - !Sub "arn:aws:s3:::${BucketName}"
+                - !Sub "arn:aws:s3:::${BucketName}/*"
+
+    RDSBackupPolicies2:
+      Type: AWS::IAM::Policy
+      Properties:
+        PolicyName: !Sub ${ProductName}-${EnvName}-RDS-Read-write
+        Roles:
+        - !Ref RDSBackupRole
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - rds:*
+              Resource: "*"
+
+    RDSBackupPolicies3:
+      Type: AWS::IAM::Policy
+      Properties:
+        PolicyName: !Sub ${ProductName}-${EnvName}-EC2-Managed
+        Roles:
+        - !Ref RDSBackupRole
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - iam:PassRole
+                - ec2:TerminateInstances
+                - ec2:RunInstances
+                - ec2:DescribeInstances
+                - ec2:DescribeVpcs
+                - ec2:CreateTags
+                - ec2:RunInstances
+                - ec2:DescribeSubnets
+                - ec2:DescribeSecurityGroups
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: "*"
+
+    RDSBackupInstanceProfile:
+      Type: AWS::IAM::InstanceProfile
+      Properties:
+        Path: /
+        Roles:
+        - !Ref RDSBackupRole
+
+    RDSBackupLambda:
+      Type: AWS::Lambda::Function
+      DependsOn: RDSBackupRole
+      Properties: 
+        Code:
+          ZipFile: !Sub |
+            import boto3
+            import time
+            region = 'us-east-1' 
+
+            user_data_script = """#!/bin/bash
+            # From aws documentation https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html
+            INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+            REGION='us-east-1'
+            S3_BUCKET_REGION='us-east-1'
+            S3_BUCKET='${BucketName}'
+            S3_FOLDER='${BucketFolderPath}'
+            DATABASE_HOST='${RDSDatabaseHost}'
+            DATABASE_USERNAME='${RDSDatabaseUsername}'
+            DATABASE_PASSWORD='${RDSDatabasePassword}'
+            DATABASE_NAME='${RDSDatabaseName}'
+            date_time=$(date +%d-%m-%Y_%H-%M)
+
+
+            tmp_location="/tmp/db_backups"
+            mkdir -p $tmp_location
+
+            today=$(date +"%m-%d-%Y-%H-%M-%S")
+            bk_file=${tmp_location}/${RDSDatabaseName}_$today.sql
+
+            echo "Creating backup of database ${DATABASE_NAME}"
+            # Do the database dump with mysqldump
+            mysqldump -RE --single-transaction --skip-lock-tables -h${DATABASE_HOST} -u${DATABASE_USERNAME} -p${DATABASE_PASSWORD} ${DATABASE_NAME} > $bk_file
+            echo "Finished DB Backup"
+
+            tar -zc $bk_file > $bk_file.tgz
+
+            echo "Uploading DB backup file ${bk_file}.tgz to S3 location: ${S3_BUCKET}/${S3_FOLDER}"
+            aws s3 cp $bk_file.tgz ${S3_BUCKET}/${S3_FOLDER}/${RDSDatabaseName}_${today}.sql.tgz
+            echo "Finished uploading backup file to s3"
+
+            echo "Deleting backup files.."
+            # we will remove dump file as soon as Jenkins job ends
+            # rm $bk_file
+            rm $bk_file.tgz
+            echo "Successfully finished db backup step"
+            aws ec2 terminate-instances --instance-ids $INSTANCE_ID --region $REGION """
+
+            def lambda_handler(event, context):
+                # DB estimated VolumeSize - need to make this dynamic according to DB size
+                vol_size=30
+
+                ec2 = boto3.client('ec2', region_name=region)
+                tags = [
+                         {'Key':'project', 'Value': 'Toptal'},
+                         {'Key': 'owner', 'Value': 'CSE'},
+                         {'Key':'Name', 'Value': 'Toptal RDS to S3 backups'}
+                ]
+                tag_specification = [{'ResourceType': 'instance', 'Tags': tags}]
+                new_instance = ec2.run_instances(
+                                    BlockDeviceMappings=[
+                                        {
+                                            'DeviceName': '/dev/xvda',
+                                            'Ebs': {
+                                              'DeleteOnTermination': True,
+                                              'VolumeSize': vol_size
+                                            }
+                                        }
+                                    ],
+                                    ImageId='ami-08935252a36e25f85',
+                                    MinCount=1,
+                                    MaxCount=1,
+                                    KeyName='${BackupLambdaEC2Key}',
+                                    InstanceType='t3.large',
+                                    TagSpecifications=tag_specification,
+                                    SubnetId='${BackupLambdaEC2SubnetId}',
+                                    SecurityGroupIds=['${BackupLambdaEC2SG}'],
+                                    IamInstanceProfile={'Name': '${RDSBackupInstanceProfile}' },
+                                    UserData=user_data_script);
+
+        FunctionName: !Join [ "-", [ !Ref ProductName, !Ref EnvName, !Ref BackupLambdaName ] ]
+        Description: Lambda function for RDS Backup as part of DR
+        Handler: index.lambda_handler
+        MemorySize: 128
+        Role: !GetAtt RDSBackupRole.Arn
+        Runtime: python3.6
+        Timeout: 10
+        Tags:
+          - 
+            Key: Business / Service Owner
+            Value: CSE
+          -
+            Key: Purpose
+            Value: DR
+          -
+            Key: ProductID
+            Value: !Ref ProductName
+          -
+            Key: Environment
+            Value: !Sub ${EnvName}
+          - 
+            Key: Name
+            Value: !Join [ "-", [ !Ref ProductName, !Ref EnvName, !Ref BackupLambdaName ] ]
+
+    ScheduledRule:
+      Type: AWS::Events::Rule
+      Properties:
+        Description: "Cloud watch event scheduled at 11pm UTC for RDS Backup"
+        ScheduleExpression: "cron(0 23 * * ? *)"
+        State: "ENABLED"
+        Targets:
+          - Arn: !GetAtt RDSBackupLambda.Arn
+            Id: "TargetFunctionV1"
+
+    PermissionForEventsToInvokeLambda:
+      Type: AWS::Lambda::Permission
+      Properties:
+        FunctionName: !Ref RDSBackupLambda
+        Action: "lambda:InvokeFunction"
+        Principal: "events.amazonaws.com"
+        SourceArn: !GetAtt ScheduledRule.Arn
+
+Outputs:
+  RDSBkupInstanceProfile:
+    Description: Instance profile of RDSBackup
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", RDSBkupInstanceProfile ]]
+    Value: !Ref RDSBackupInstanceProfile
+
+  RDSBkupRoleArn:
+    Description: ARN of RDSBackup Role
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", RDSBkupRoleArn ]]
+    Value: !GetAtt RDSBackupRole.Arn
