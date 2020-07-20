@@ -20,7 +20,7 @@ aws cloudformation deploy --template-file templates/api-stack.yaml --stack-name 
 
 aws cloudformation deploy --template-file templates/web-stack.yaml --stack-name Toptal-PROD-Web --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM
 
-aws cloudformation deploy --template-file templates/waf-security.yaml --stack-name Toptal-WAF-Security --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM #give permission to create role
+#aws cloudformation deploy --template-file templates/waf-security.yaml --stack-name Toptal-WAF-Security --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_IAM #give permission to create role
 
 #aws cloudformation deploy --template-file templates/Wazuh.yaml --stack-name Toptal-PROD-Wazuh --profile ToptalAdmin --region=$AWS_REGION --capabilities CAPABILITY_NAMED_IAM --parameter-overrides ToolsUsername=$ToolsUsername ToolsPassword=$ToolsPassword
 

@@ -63,6 +63,8 @@ aws secretsmanager delete-secret --secret-id PROD/Toptal/ApiEB --force-delete-wi
 aws secretsmanager delete-secret --secret-id PROD/Toptal/WebEB --force-delete-without-recovery --profile ToptalAdmin
 
 aws secretsmanager delete-secret --secret-id PROD/Toptal/DBCred --force-delete-without-recovery --profile ToptalAdmin
+
+aws rds delete-db-instance --db-instance-identifier toptal-prod-dbinstance --region us-east-1 --profile ToptalAdmin
 ```
 
 Create 2 ECR repos for hosting Api and Web docker container images by running below commands:
