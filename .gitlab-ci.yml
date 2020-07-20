@@ -17,7 +17,6 @@ testing:
     - 'npm install'
     - 'npm test'
 
-
 docker-build-push:
   stage: docker-build-push
   image: docker:latest

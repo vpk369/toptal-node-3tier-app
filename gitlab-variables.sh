@@ -4,7 +4,6 @@ EB_CONFIG_DIR='.elasticbeanstalk'
 EB_EXT_DIR='.ebextensions'
 SSH_KEY_NAME='toptal-screening'
 PORT=80
-ELK_STACK_IP='12.34.56.78'
 
 SECRETS_API_EB='PROD/Toptal/ApiEB'
 secrets_api_eb_file='./secrets_api_eb.json'
