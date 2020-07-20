@@ -15,14 +15,6 @@ Parameters:
     Description: A Product name that will be prefixed to resource names
     Type: String
     Default: ELK
-  ToolsUsername:
-    Description: Username to be used for kibana, Elasticsearch, Wazuh api
-    Type: String
-    NoEcho: true
-  ToolsPassword:
-    Description: Password to be used for kibana, Elasticsearch, Wazuh api
-    Type: String
-    NoEcho: true
   KeyName:
     Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
     Type: String
