@@ -1,0 +1,442 @@
+Description: >-
+  This template creates a Load Balancer which will forward requests to an
+  instance in the stack region
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+    AllowedValues:
+      - Non-Prod
+      - Prod
+      - Shared
+    Default: Shared
+  ProductName:
+    Description: A Product name that will be prefixed to resource names
+    Type: String
+    Default: ELK
+  ToolsUsername:
+    Description: Username to be used for kibana, Elasticsearch, Wazuh api
+    Type: String
+    NoEcho: true
+  ToolsPassword:
+    Description: Password to be used for kibana, Elasticsearch, Wazuh api
+    Type: String
+    NoEcho: true
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: String
+    Default: toptal-screening
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+  InstanceType:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t3a.medium
+    AllowedValues:
+      - t3a.medium
+    ConstraintDescription: must be a valid EC2 instance type.
+  CreatorEmail:
+    Description: Creator e-mail of this stack
+    Type: String
+    Default: 'vpk369@gmail.com'
+  TeamEmail:
+    Description: Team e-mail to send alerts to
+    Type: String
+    Default: 'vpk369@gmail.com'
+  VpnIP:
+    Description: Vpn IP address
+    Type: String
+    Default: '34.238.5.53/32'
+  NetworkStackName:
+    Description: Name of the Network stack. This is used in exporting vpc values from that stack.
+    Type: String
+    Default: Toptal-PROD-Network
+Mappings:
+  AWSRegionToAMI: # Ami Id in specific to be used for launching instance
+    us-east-1:
+      AMIID: 'ami-07d0cf3af28718ef8'  #ubuntu 18.04
+    us-west-2:
+      AMIID: ami-0d6621c01e8c2de2c
+    eu-west-1:
+      AMIID: ami-06ce3edf0cff21f07
+  AWSRegionToVPCId: # VPC id in which instance to be launched
+    us-east-1:
+      VPCId: vpc-04d3e3e255f99cffa
+    us-west-2:
+      VPCId: vpc-xxxx
+    eu-west-1:
+      VPCId: vpc-xxxx
+  AWSRegionToSubnetId: # Private Subnet id in which instance to be launched.
+    us-east-1:
+      SubnetId: subnet-00432af58261b5dd5
+    us-west-2:
+      SubnetId: subnet-xxxx
+    eu-west-1:
+      SubnetId: subnet-xxxx
+  AWSRegionToSubnetIdForLB: # Public Subnet id in which loadbalancer be launched.
+    us-east-1:
+      SubnetId: subnet-0212d244d080f0c6e
+    us-west-2:
+      SubnetId: subnet-xxxx
+    eu-west-1:
+      SubnetId: subnet-xxxx
+Resources:
+  LoadBalancerSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupName: !Sub '${ProductName}-${EnvironmentName}-LBSG'
+      GroupDescription: LB security group for Instance
+      VpcId: !FindInMap [AWSRegionToVPCId, !Ref 'AWS::Region', VPCId]
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp:
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
+          Description: '-'
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: !Ref VpnIP
+          Description: VPN Server
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: '183.83.166.17/32'
+        # - IpProtocol: -1
+        #   SourceSecurityGroupId: sg-xxx
+        #   Description: VPN-Dev-SG-HostSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProductName}-${EnvironmentName}-LBSG'
+        - Key: Business / Service Owner
+          Value: !Ref TeamEmail
+        - Key: ProductID
+          Value: !Ref ProductName
+        - Key: Environment
+          Value: !Sub '${EnvironmentName}'
+        - Key: Purpose
+          Value: Network
+        - Key: CreatedBy
+          Value: !Ref CreatorEmail
+
+  InstanceSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    DependsOn: 'LoadBalancerSecurityGroup'
+    Properties:
+      GroupName: !Sub '${ProductName}-${EnvironmentName}-SG'
+      GroupDescription:  Instance security group
+      VpcId: !FindInMap [AWSRegionToVPCId, !Ref 'AWS::Region', VPCId]
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          CidrIp:
+            Fn::ImportValue:
+              !Sub "${NetworkStackName}:VPCCidr"
+          Description: 'within network'
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: !Ref VpnIP
+          Description: VPN Server
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: !Ref VpnIP
+          Description: VPN Server
+        # - IpProtocol: -1
+        #   SourceSecurityGroupId: sg-xxx
+        #   Description: VPN-Dev-SG-HostSecurityGroup
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          SourceSecurityGroupId: !GetAtt LoadBalancerSecurityGroup.GroupId
+          Description: 'LoadBalancer SG'
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: '183.83.166.17/32'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProductName}-${EnvironmentName}-SG'
+        - Key: Business / Service Owner
+          Value: !Ref TeamEmail
+        - Key: ProductID
+          Value: !Ref ProductName
+        - Key: Environment
+          Value: !Sub '${EnvironmentName}'
+        - Key: Purpose
+          Value: Network
+        - Key: CreatedBy
+          Value: !Ref CreatorEmail
+
+  AppRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+
+  AppInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+      - !Ref AppRole
+
+  Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref AppInstanceProfile
+      SecurityGroupIds:
+        - !GetAtt InstanceSecurityGroup.GroupId
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [AWSRegionToAMI, !Ref 'AWS::Region', AMIID]
+      SubnetId:
+        !FindInMap [AWSRegionToSubnetId, !Ref 'AWS::Region', SubnetId]
+
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash
+
+            #installed this on ubuntu 18.04
+            #references: https://www.digitalocean.com/community/tutorials/how-to-install-elasticsearch-logstash-and-kibana-elastic-stack-on-ubuntu-18-04
+            #            https://www.scaleway.com/en/docs/setup-elastic-stack-on-scaleway/
+            # https://qbox.io/blog/elasticsearch-logstash-kibana-manage-nginx-logs
+
+            add-apt-repository -y ppa:webupd8team/java
+            apt-get update -y
+            apt install -y default-jre
+            export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64  #Ensue this path is correct
+
+            sudo fallocate -l 1G /swapfile  #craeating swap space for micro instance
+            sudo chmod 600 /swapfile
+            sudo mkswap /swapfile
+            sudo swapon /swapfile
+            sudo cp /etc/fstab /etc/fstab.bak
+            echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+            sudo sysctl vm.swappiness=10
+            echo 'vm.swappiness=10' >> /etc/sysctl.conf
+            sudo sysctl vm.vfs_cache_pressure=50
+            echo 'vm.vfs_cache_pressure=50' >> /etc/sysctl.conf
+
+            wget https://artifacts.elastic.co/downloads/logstash/logstash-7.8.0.deb
+            sudo dpkg -i logstash-7.8.0.deb
+
+            curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-oss-7.8.0-amd64.deb
+            sudo dpkg -i filebeat-oss-7.8.0-amd64.deb
+
+            curl -L -O https://artifacts.elastic.co/downloads/beats/metricbeat/metricbeat-oss-7.8.0-amd64.deb
+            sudo dpkg -i metricbeat-oss-7.8.0-amd64.deb
+
+            wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.8.0-amd64.deb
+            sudo dpkg -i elasticsearch-7.8.0-amd64.deb
+
+            wget https://artifacts.elastic.co/downloads/kibana/kibana-7.8.0-amd64.deb
+            sudo dpkg -i kibana-7.8.0-amd64.deb
+
+            sed -i '/network.host:/c\network.host: 0.0.0.0' /etc/elasticsearch/elasticsearch.yml
+            sed -i '/discovery.seed_hosts:/c\discovery.seed_hosts: []' /etc/elasticsearch/elasticsearch.yml
+            ###sed -i '/cluster.initial_master_nodes:/c\cluster.initial_master_nodes: []' /etc/elasticsearch/elasticsearch.yml
+            echo 'node.data: true' >> /etc/elasticsearch/elasticsearch.yml
+            echo 'node.master: true' >> /etc/elasticsearch/elasticsearch.yml
+            echo 'discovery.type: single-node' >> /etc/elasticsearch/elasticsearch.yml
+
+            
+            curl -X GET "localhost:9200"
+            sed -i '1iserver.host: 0.0.0.0' /etc/kibana/kibana.yml
+            sed -i '/server.port:/c\server.port: 5601' /etc/kibana/kibana.yml
+
+            apt-get install -y nginx
+            echo "kibana:`openssl passwd -apr1 kibana`" | tee -a /etc/nginx/htpasswd.users
+
+            cat > /etc/nginx/sites-available/default <<'EOF'
+                server {
+                  listen 80;
+                  #server_name kibana.local;
+
+                  auth_basic "Restricted Access";
+                  auth_basic_user_file /etc/nginx/htpasswd.users;
+
+                  location / {
+                    proxy_pass         http://localhost:5601;
+                    proxy_redirect     off;
+
+                    proxy_set_header   Host              $host;
+                    proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+                    proxy_set_header   X-Forwarded-Proto $scheme;
+                  }
+
+                }
+            EOF
+
+            sed -i '/module(load="imudp")/c\module(load="imudp")' /etc/rsyslog.conf
+            sed -i '/input(type="imudp" port="514")/c\input(type="imudp" port="514")' /etc/rsyslog.conf
+
+
+            cat > /etc/logstash/conf.d/02-beats-input.conf <<EOF
+            input {
+              beats {
+                port => 5044
+              }
+            }
+
+            filter {
+                grok {
+                    match => { "source" => "%{GREEDYDATA}/%{GREEDYDATA:app}.log" }
+                }
+            }
+
+            output {
+                logstash {
+                    hosts => ["localhost:9600"]
+                }
+            }
+            EOF
+
+            cat > /etc/logstash/conf.d/10-syslog-filter.conf <<EOF
+            filter {
+              if [type] == "syslog" {
+                grok {
+                  match => { "message" => "%{SYSLOGTIMESTAMP:syslog_timestamp} %{SYSLOGHOST:syslog_hostname} %{DATA:syslog_program}(?:\[%{POSINT:syslog_pid}\])?: %{GREEDYDATA:syslog_message}" }
+                  add_field => [ "received_at", "%{@timestamp}" ]
+                  add_field => [ "received_from", "%{host}" ]
+                }
+                syslog_pri { }
+                date {
+                  match => [ "syslog_timestamp", "MMM  d HH:mm:ss", "MMM dd HH:mm:ss" ]
+                }
+              }
+            }
+            EOF
+
+            cat > /etc/logstash/conf.d/30-elasticsearch-output.conf <<EOF
+            output {
+              elasticsearch {
+                hosts => ["localhost:9200"]
+                sniffing => false
+                manage_template => false
+                index => "%{[@metadata][beat]}-%{[@metadata][version]}-%{+YYYY.MM.dd}"
+                document_type => "%{[@metadata][type]}"
+              }
+            }
+            EOF
+
+            # sed -i '/output.elasticsearch:/c\#output.elasticsearch:' /etc/filebeat/filebeat.yml
+            # sed -i '/localhost:9200/c\\ \ #hosts: ["localhost:9200"]' /etc/filebeat/filebeat.yml
+
+            # sed -i '/#output.logstash:/c\output.logstash:' /etc/filebeat/filebeat.yml
+            # sed -i '/localhost:5044/c\\ \ hosts: ["localhost:5044"]' /etc/filebeat/filebeat.yml
+
+
+            ## doesnt work
+            # sed -i '/output.elasticsearch:/c\#output.elasticsearch:' /etc/metricbeat/metricbeat.yml
+            # sed -i '/localhost:9200/c\\ \ #hosts: ["localhost:9200"]' /etc/metricbeat/metricbeat.yml
+            # sed -i '/#output.logstash:/c\output.logstash:' /etc/metricbeat/metricbeat.yml
+            # sed -i '/localhost:5044/c\\ \ hosts: ["localhost:5044"]' /etc/metricbeat/metricbeat.yml
+
+
+            sed -i '/filebeat.inputs:/c\filebeat.inputs:\n\n- type: syslog\n\ \ protocol.udp:\n\ \ \ \ host: "localhost:514"'  /etc/filebeat/filebeat.yml
+
+            filebeat modules enable nginx system logstash elasticsearch
+            
+            # alternative way of using sed to set output to logstash/es
+            #sudo filebeat modules list
+            # filebeat setup --template -E output.logstash.enabled=false \
+            # -E 'output.elasticsearch.hosts=["localhost:9200"]'
+
+            # filebeat setup -e -E output.logstash.enabled=false \
+            # -E output.elasticsearch.hosts=['localhost:9200'] \
+            # -E setup.kibana.host=localhost:5601
+
+            # metricbeat setup --index-management \
+            # -E output.logstash.enabled=false \
+            # -E 'output.elasticsearch.hosts=["localhost:9200"]'
+
+            metricbeat modules enable system logstash elasticsearch
+
+            systemctl enable elasticsearch
+            systemctl start elasticsearch
+
+            systemctl start logstash
+            systemctl enable logstash
+
+            systemctl start filebeat
+            systemctl enable filebeat
+            systemctl start metricbeat
+            systemctl enable metricbeat
+
+            systemctl enable kibana
+            systemctl start kibana
+            systemctl enable nginx
+            systemctl restart nginx
+            
+            curl -XGET 'http://localhost:9200/filebeat-*/_search?pretty'
+            echo http://`curl -s checkip.amazonaws.com`:5601
+
+            metricbeat -e -c /etc/metricbeat/metricbeat.yml
+            filebeat -e -c /etc/filebeat/filebeat.yml
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProductName}-${EnvironmentName}'
+        - Key: Business / Service Owner
+          Value: !Ref TeamEmail
+        - Key: ProductID
+          Value: !Ref ProductName
+        - Key: Environment
+          Value: !Sub '${EnvironmentName}'
+        - Key: Purpose
+          Value: Reporting
+        - Key: CreatedBy
+          Value: !Ref CreatorEmail
+ 
+  LoadBalancer:
+    Type: 'AWS::ElasticLoadBalancing::LoadBalancer'
+    Properties:
+      Scheme: 'internet-facing'
+      Subnets:
+        - !FindInMap [AWSRegionToSubnetIdForLB, !Ref 'AWS::Region', SubnetId]
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Instances:
+        - !Ref Instance
+      Listeners:
+        - LoadBalancerPort: '80'
+          InstancePort: '80'
+          Protocol: HTTP
+      HealthCheck:
+        HealthyThreshold: '2'
+        Interval: '5'
+        Target: 'TCP:80'
+        Timeout: '2'
+        UnhealthyThreshold: '2'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProductName}-${EnvironmentName}-LB'
+        - Key: Business / Service Owner
+          Value: !Ref TeamEmail
+        - Key: Purpose
+          Value: Network
+        - Key: ProductID
+          Value: !Ref ProductName
+        - Key: Environment
+          Value: !Sub '${EnvironmentName}'
+
+Outputs:
+  LoadBalancerURL:
+    Description: LB URL
+    Value: !GetAtt LoadBalancer.DNSName
