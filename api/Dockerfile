@@ -7,7 +7,7 @@ WORKDIR '/app'
 # Copy package.json to the working directory
 COPY ./package.json ./
 
-COPY ./entrypoint.sh ./
+COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
 
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
@@ -21,8 +21,8 @@ RUN yarn
 # Copying the rest of the code to the working directory
 COPY . .
 
-# Make port 3000 available to the world outside this container
+# Make port 80 available to the world outside this container
 EXPOSE 80
 
 # Run shell script and start node
-CMD ["sh","./entrypoint.sh"]
+CMD ["sh","/usr/local/bin/entrypoint.sh"]
