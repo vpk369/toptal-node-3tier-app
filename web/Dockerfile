@@ -5,7 +5,7 @@ FROM nikolaik/python-nodejs
 WORKDIR '/app'
 
 # Copy package.json to the working directory
-COPY ./package.json ./
+COPY ./package*.json ./
 
 COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
 
