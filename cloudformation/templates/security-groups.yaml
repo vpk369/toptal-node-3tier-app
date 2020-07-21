@@ -136,6 +136,16 @@ Resources:
           IpProtocol: tcp
           ToPort: 80
           Description: VPN Gateway
+        - CidrIp: !Ref vpnIp
+          FromPort: 3000
+          IpProtocol: tcp
+          ToPort: 3000
+          Description: VPN Gateway
+        - SourceSecurityGroupId: !GetAtt WebServerLBSG.GroupId
+          FromPort: 3000
+          IpProtocol: tcp
+          ToPort: 3000
+          Description: Traffic routed through Webserver loadbalancer
         - SourceSecurityGroupId: !GetAtt WebServerLBSG.GroupId
           FromPort: 80
           IpProtocol: tcp
@@ -201,6 +211,11 @@ Resources:
           FromPort: 80
           IpProtocol: tcp
           ToPort: 80
+          Description: VPN Gateway
+        - CidrIp: 0.0.0.0/0  #this should be publicly open for CDN
+          FromPort: 3000
+          IpProtocol: tcp
+          ToPort: 3000
           Description: VPN Gateway
         - CidrIp: !Ref vpnIp
           FromPort: 443
