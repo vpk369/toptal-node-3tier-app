@@ -5,7 +5,7 @@ FROM node:12.7.0-alpine
 WORKDIR /usr/src/app
 
 # add `/app/node_modules/.bin` to $PATH
-ENV PATH /usr/src/app/node_modules/.bin:$PATH
+#ENV PATH /usr/src/app/node_modules/.bin:$PATH
 
 # Copy package.json to the working directory
 COPY ./package*.json ./
@@ -20,8 +20,8 @@ RUN npm install
 # Copying the rest of the code to the working directory
 COPY . .
 
-# Make port 3000 available to the world outside this container
-EXPOSE 3000
+# Make port 80 available to the world outside this container
+EXPOSE 80
 
 # Run index.js when the container launches
 CMD [ "npm", "start" ]
