@@ -9,4 +9,4 @@ echo "PORT=%PORT%" >> .env
 chmod +r .env
 
 #start node
-node ./bin/www
+npm start

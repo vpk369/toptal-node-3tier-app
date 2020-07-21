@@ -5,7 +5,11 @@ FROM node:12.7.0-alpine
 WORKDIR '/src'
 
 # Copy package.json to the working directory
-COPY package.json .
+COPY ./package.json .
+
+COPY ./entrypoint.sh /usr/local/bin/
+
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Install any needed packages specified in package.json
 RUN npm install
@@ -17,5 +21,4 @@ COPY . .
 EXPOSE 80
 
 # Run index.js when the container launches
-CMD ["npm", "start"]
-
+CMD ["sh","/usr/local/bin/entrypoint.sh"]

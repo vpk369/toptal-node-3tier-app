@@ -94,7 +94,7 @@ Parameters:
   SolutionStackName:
     Description: Solution Stack Name for EB platform
     Type: String
-    Default: 64bit Amazon Linux 2018.03 v2.15.2 running Docker 18.09.9-ce
+    Default: 64bit Amazon Linux 2018.03 v2.15.2 running Docker 19.03.6-ce
 
   SecurityGroupStackName:
     Description: Name of the Security Groups stack. This is used in exporting SG values from that stack.
@@ -283,17 +283,17 @@ Resources:
 
               #health check path?
 
-            - Namespace: aws:elasticbeanstalk:environment:process:default
-              OptionName: HealthCheckPath
-              Value: /
+            # - Namespace: aws:elasticbeanstalk:environment:process:default
+            #   OptionName: HealthCheckPath
+            #   Value: /
 
-            - Namespace: aws:elasticbeanstalk:application
-              OptionName: Application Healthcheck URL
-              Value: /
+            # - Namespace: aws:elasticbeanstalk:application
+            #   OptionName: Application Healthcheck URL
+            #   Value: /
 
-            - Namespace: aws:elasticbeanstalk:environment:process:default
-              OptionName: MatcherHTTPCode
-              Value: 200
+            # - Namespace: aws:elasticbeanstalk:environment:process:default
+            #   OptionName: MatcherHTTPCode
+            #   Value: 200
 
             - Namespace: aws:elasticbeanstalk:environment:process:default
               OptionName: StickinessEnabled
