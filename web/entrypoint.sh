@@ -9,4 +9,4 @@ echo "PORT=%PORT%" >> .env
 chmod +r .env
 
 #start node
-npm start
+./node_modules/.bin/react-scripts start
