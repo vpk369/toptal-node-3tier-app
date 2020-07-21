@@ -1,28 +1,25 @@
 # Use an official Node runtime as a parent image
-FROM node:12.7.0-alpine
+FROM node:13.12.0-alpine as builder
 
-# Set the working directory to /app
-WORKDIR /usr/src/app
+# set working directory
+WORKDIR /app
 
 # add `/app/node_modules/.bin` to $PATH
-ENV PATH /usr/src/app/node_modules/.bin:$PATH
+ENV PATH /app/node_modules/.bin:$PATH
 
 # Copy package.json to the working directory
 COPY ./package*.json ./
 
-COPY ./entrypoint.sh .
+# copy source code
+COPY . ./
 
-RUN chmod +x ./entrypoint.sh
-
-# Install any needed packages specified in package.json
+# install app dependencies
 RUN npm install
 
-# Copying the rest of the code to the working directory
-COPY . .
+# run production build
+RUN npm run build
 
-# Make port 80 available to the world outside this container
+FROM nginx:stable-alpine
+COPY --from=builder /app/build /usr/share/nginx/html
 EXPOSE 80
-
-# Run index.js when the container launches
-CMD [ "npm", "start" ]
-#CMD ["sh","./entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]
