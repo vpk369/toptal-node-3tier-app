@@ -5,7 +5,7 @@ FROM node:12.7.0-alpine
 WORKDIR /usr/src/app
 
 # Copy package.json to the working directory
-COPY ./package*.json .
+COPY ./package*.json ./
 
 COPY ./entrypoint.sh .
 
