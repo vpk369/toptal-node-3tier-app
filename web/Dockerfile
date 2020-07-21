@@ -16,10 +16,8 @@ COPY . ./
 # install app dependencies
 RUN npm install
 
-# run production build
-RUN npm run build
-
 FROM nginx:stable-alpine
-COPY --from=builder /app/build /usr/share/nginx/html
-EXPOSE 80
+COPY --from=builder /app /usr/share/nginx/html
+RUN npm start
+EXPOSE 3000
 CMD ["nginx", "-g", "daemon off;"]
