@@ -21,8 +21,8 @@ RUN yarn
 # Copying the rest of the code to the working directory
 COPY . .
 
-# Make port 80 available to the world outside this container
-EXPOSE 80
+# Make port 3000 available to the world outside this container
+EXPOSE 3000
 
 # Run shell script and start node
-CMD [ "npm", "start" ]
+CMD [ "./node_modules/react-scripts/bin/react-scripts.js", "start" ]
