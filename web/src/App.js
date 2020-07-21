@@ -1,21 +1,25 @@
 import React from 'react';
 
 class myComponent extends React.Component {
+   constructor(props) {
+      super(props);
+		
+      this.state = {
+         request_uuid: "<REQUEST_UUID>",
+      }
+   }
+
   componentDidMount() {
-    const apiUrl = process.env.API_HOST + '/api/status';
+  	const apiUrl = 'http://toptal-prod-api.us-east-1.elasticbeanstalk.com/api/status'
     fetch(apiUrl)
-      .then((response) => response.json())
-      .then((data) => console.log('This is your api status: ', data));
+      .then((response) => {
+      	console.log(response)
+      	this.setState({request_uuid: response.request_uuid})
+      })
+      // .then();
   }
   render() {
-    return <h1>REST API call with REACT, Check the Browser Console for Output. </h1>;
+    return <h1>Request uuid from api server is {this.state.request_uuid}</h1>;
   }
 }
 export default myComponent;
-
-{/* This is a simple rest call with react JS.
-There are few .js files in this folder that has some dummy data
-
-https://www.smashingmagazine.com/2020/06/rest-api-react-fetch-axios/
-
-*/}

@@ -7,7 +7,7 @@ WORKDIR '/app'
 # Copy package.json to the working directory
 COPY ./package.json ./
 
-COPY ./entrypoint.sh /usr/local/bin/
+COPY ./entrypoint.sh ./
 
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
@@ -25,4 +25,4 @@ COPY . .
 EXPOSE 80
 
 # Run shell script and start node
-CMD ["sh","/usr/local/bin/entrypoint.sh"]
+CMD ["sh","./entrypoint.sh"]

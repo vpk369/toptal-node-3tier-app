@@ -2,12 +2,12 @@
 FROM node:12.7.0-alpine
 
 # Set the working directory to /app
-WORKDIR '/src'
+WORKDIR '/app'
 
 # Copy package.json to the working directory
 COPY ./package.json .
 
-COPY ./entrypoint.sh /usr/local/bin/
+COPY ./entrypoint.sh .
 
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
@@ -17,8 +17,8 @@ RUN npm install
 # Copying the rest of the code to the working directory
 COPY . .
 
-# Make port 80 available to the world outside this container
-EXPOSE 80
+# Make port 3000 available to the world outside this container
+EXPOSE 3000
 
 # Run index.js when the container launches
-CMD ["sh","/usr/local/bin/entrypoint.sh"]
+CMD ["sh","./entrypoint.sh"]
