@@ -2,10 +2,10 @@
 FROM node:12.7.0-alpine
 
 # Set the working directory to /app
-WORKDIR '/app'
+WORKDIR /usr/src/app
 
 # Copy package.json to the working directory
-COPY ./package.json .
+COPY ./package*.json .
 
 COPY ./entrypoint.sh .
 
@@ -21,4 +21,5 @@ COPY . .
 EXPOSE 3000
 
 # Run index.js when the container launches
-CMD ["sh","./entrypoint.sh"]
+CMD [ "npm", "start" ]
+#CMD ["sh","./entrypoint.sh"]
