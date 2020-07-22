@@ -10,13 +10,12 @@ class myComponent extends React.Component {
    }
 
   componentDidMount() {
-  	const apiUrl = 'http://toptal-prod-api.us-east-1.elasticbeanstalk.com/api/status'
+  	const apiUrl = process.env.API_HOST + '/api/status'
     fetch(apiUrl)
-      .then((response) => {
-      	console.log(response)
-      	this.setState({request_uuid: response.request_uuid})
-      })
-      // .then();
+      .then(response => response.json())
+      .then(data => { console.log(data);
+        this.setState({request_uuid: data.request_uuid})
+      });
   }
   render() {
     return <h1>Request uuid from api server is {this.state.request_uuid}</h1>;
