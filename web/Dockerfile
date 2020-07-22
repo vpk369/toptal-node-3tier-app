@@ -25,4 +25,4 @@ COPY . .
 EXPOSE 80
 
 # Run shell script and start node
-CMD [ "yarn", "start" ]
+CMD ["sh","/usr/local/bin/entrypoint.sh"]
