@@ -1,6 +1,6 @@
 Description: >-
   This template creates a Load Balancer which will forward requests to an
-  instance in the stack region
+  instance in the stack region (Note: make sure you choose large disk space instead of default 8 GB)
 
 Parameters:
   EnvironmentName:
