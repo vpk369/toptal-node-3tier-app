@@ -2,6 +2,7 @@ Description: >-
   This template creates a Load Balancer which will forward requests to an
   instance in the stack region (Note: make sure you choose large disk space instead of default 8 GB)
   two commands after resizing volume: sudo growpart /dev/nvme0n1 1; sudo resize2fs /dev/nvme0n1p1
+  follow https://sysadmins.co.za/setup-kibana-dashboards-for-nginx-log-analysis/ for creating dashboards
 
 Parameters:
   EnvironmentName:
